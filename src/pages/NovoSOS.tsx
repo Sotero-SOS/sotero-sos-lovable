@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -38,6 +37,9 @@ const NovoSOS = () => {
 
     // Simulação de envio
     await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Salvar no localStorage para que o Dashboard possa detectar
+    localStorage.setItem("newSOS", JSON.stringify(formData));
 
     toast({
       title: "SOS Iniciado!",

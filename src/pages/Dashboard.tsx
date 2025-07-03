@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { SOSCard } from "@/components/SOSCard";
 import { useToast } from "@/hooks/use-toast";
 
-// Dados simulados de chamados SOS
+// Dados simulados de chamados SOS atualizados
 const mockSOSData = [
   {
     id: "1",
-    vehicleType: "Caminhão",
-    vehiclePlate: "ABC-1234",
+    vehicleType: "Truck",
+    vehiclePlate: "224009",
     driverName: "José da Silva",
     location: "Rua São Jorge, Itapuã",
     problemType: "Pane elétrica",
@@ -23,8 +23,8 @@ const mockSOSData = [
   },
   {
     id: "2",
-    vehicleType: "Trator",
-    vehiclePlate: "DEF-5678",
+    vehicleType: "Super Toco",
+    vehiclePlate: "224010",
     driverName: "Maria Santos",
     location: "Av. Paralela, Pituaçu",
     problemType: "Problema mecânico",
@@ -36,8 +36,8 @@ const mockSOSData = [
   },
   {
     id: "3",
-    vehicleType: "Van",
-    vehiclePlate: "GHI-9012",
+    vehicleType: "Agilix",
+    vehiclePlate: "224011",
     driverName: "Carlos Oliveira",
     location: "Centro, Pelourinho",
     problemType: "Pneu furado",
@@ -50,7 +50,7 @@ const mockSOSData = [
   {
     id: "4",
     vehicleType: "Triciclo",
-    vehiclePlate: "JKL-3456",
+    vehiclePlate: "224012",
     driverName: "Ana Costa",
     location: "Barra, Ondina",
     problemType: "Falha no sistema",
@@ -67,6 +67,49 @@ const Dashboard = () => {
   const [filter, setFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+
+  // Verificar localStorage para novos chamados SOS
+  useEffect(() => {
+    const checkForNewSOS = () => {
+      const newSOSData = localStorage.getItem("newSOS");
+      if (newSOSData) {
+        const parsedSOS = JSON.parse(newSOSData);
+        const newSOS = {
+          id: Date.now().toString(),
+          vehicleType: parsedSOS.vehicleType,
+          vehiclePlate: parsedSOS.vehiclePlate,
+          driverName: parsedSOS.driverName,
+          location: parsedSOS.location,
+          problemType: "Diagnóstico técnico",
+          description: parsedSOS.outro || "Chamado registrado com diagnóstico completo",
+          requestTime: new Date().toLocaleString('pt-BR', {
+            day: '2-digit',
+            month: '2-digit', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          estimatedTime: 30,
+          status: "waiting" as const,
+          completionTime: undefined
+        };
+        
+        setSOSData(prev => [newSOS, ...prev]);
+        localStorage.removeItem("newSOS");
+        
+        toast({
+          title: "Novo SOS Registrado!",
+          description: `Chamado para veículo ${parsedSOS.vehiclePlate} foi adicionado ao dashboard.`,
+        });
+      }
+    };
+
+    // Verificar imediatamente e depois a cada 2 segundos
+    checkForNewSOS();
+    const interval = setInterval(checkForNewSOS, 2000);
+    
+    return () => clearInterval(interval);
+  }, [toast]);
 
   const filteredData = sosData.filter(sos => {
     const matchesFilter = filter === "all" || sos.status === filter;
@@ -157,7 +200,7 @@ const Dashboard = () => {
 
         <div className="w-full sm:w-auto">
           <Input
-            placeholder="Buscar por placa ou motorista..."
+            placeholder="Buscar por código ou motorista..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:w-64"

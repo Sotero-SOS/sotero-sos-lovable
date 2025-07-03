@@ -48,16 +48,15 @@ const statusConfig = {
 };
 
 const vehicleIcons = {
-  "Caminhão": "🚛",
-  "Trator": "🚜", 
-  "Triciclo": "🛺",
-  "Van": "🚐",
-  "Outros": "🚗"
+  "Truck": "🚛",
+  "Super Toco": "🚛",
+  "Agilix": "🚛",
+  "Triciclo": "🛺"
 };
 
 export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
   const statusInfo = statusConfig[sos.status];
-  const vehicleIcon = vehicleIcons[sos.vehicleType as keyof typeof vehicleIcons] || "🚗";
+  const vehicleIcon = vehicleIcons[sos.vehicleType as keyof typeof vehicleIcons] || "🚛";
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
