@@ -3,12 +3,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Circle, AlertCircle } from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
 
-type SOSCall = Tables<'sos_calls'>;
+interface SOSData {
+  id: string;
+  vehicleType: string;
+  vehiclePlate: string;
+  driverName: string;
+  location: string;
+  problemType: string;
+  description: string;
+  requestTime: string;
+  estimatedTime: number;
+  status: "waiting" | "in-progress" | "completed" | "overdue";
+  completionTime?: string;
+}
 
 interface SOSCardProps {
-  sos: SOSCall;
+  sos: SOSData;
   onViewDetails: (id: string) => void;
   onComplete: (id: string) => void;
 }
@@ -44,19 +55,8 @@ const vehicleIcons = {
 };
 
 export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
-  const statusInfo = statusConfig[sos.status || 'waiting'];
-  const vehicleIcon = vehicleIcons[sos.vehicle_type as keyof typeof vehicleIcons] || "🚛";
-
-  const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const statusInfo = statusConfig[sos.status];
+  const vehicleIcon = vehicleIcons[sos.vehicleType as keyof typeof vehicleIcons] || "🚛";
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -65,8 +65,8 @@ export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
         <div className="flex items-center gap-3 mb-4">
           <span className="text-2xl">{vehicleIcon}</span>
           <div>
-            <h3 className="font-semibold text-lg">{sos.vehicle_plate}</h3>
-            <p className="text-sm text-gray-600">{sos.vehicle_type}</p>
+            <h3 className="font-semibold text-lg">{sos.vehiclePlate}</h3>
+            <p className="text-sm text-gray-600">{sos.vehicleType}</p>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm font-medium text-gray-900">Data/Hora</p>
-              <p className="text-sm text-gray-600">{formatDateTime(sos.request_time)}</p>
+              <p className="text-sm text-gray-600">{sos.requestTime}</p>
             </div>
             <Badge className={statusInfo.color}>
               <statusInfo.icon className="w-3 h-3 mr-1" />
@@ -90,12 +90,12 @@ export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
           
           <div>
             <p className="text-sm font-medium text-gray-900">Motorista</p>
-            <p className="text-sm text-gray-600">{sos.driver_name}</p>
+            <p className="text-sm text-gray-600">{sos.driverName}</p>
           </div>
           
           <div>
             <p className="text-sm font-medium text-gray-900">Problema</p>
-            <p className="text-sm text-gray-600">{sos.problem_type}</p>
+            <p className="text-sm text-gray-600">{sos.problemType}</p>
           </div>
           
           {sos.description && (
@@ -111,12 +111,12 @@ export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
           <div className="flex justify-between items-center mb-3">
             <div>
               <p className="text-sm font-medium text-gray-900">Tempo estimado</p>
-              <p className="text-sm text-gray-600">{sos.estimated_time} min</p>
+              <p className="text-sm text-gray-600">{sos.estimatedTime} min</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">Conclusão</p>
               <p className="text-sm text-gray-600">
-                {sos.completion_time || "Em andamento..."}
+                {sos.completionTime || "Em andamento..."}
               </p>
             </div>
           </div>
