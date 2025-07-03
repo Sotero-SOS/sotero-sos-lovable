@@ -44,9 +44,11 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isCollapsed = state === "collapsed";
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -54,18 +56,18 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible>
+    <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarContent>
         <div className="p-4">
           <img 
             src="/lovable-uploads/b7e8b7f6-44a9-4caf-82c7-87c7325cddb2.png" 
             alt="Sotero Ambiental" 
-            className={`transition-all duration-200 ${collapsed ? "h-8" : "h-12"} mx-auto`}
+            className={`transition-all duration-200 ${isCollapsed ? "h-8" : "h-12"} mx-auto`}
           />
         </div>
         
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "hidden" : ""}>
+          <SidebarGroupLabel className={isCollapsed ? "hidden" : ""}>
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -78,7 +80,7 @@ export function AppSidebar() {
                   >
                     <NavLink to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      {!isCollapsed && <span>{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -94,7 +96,7 @@ export function AppSidebar() {
           onClick={handleLogout}
           className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
         >
-          {!collapsed && "Sair"}
+          {!isCollapsed && "Sair"}
         </Button>
       </SidebarFooter>
     </Sidebar>
