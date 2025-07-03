@@ -14,37 +14,46 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulação de login
+    // Simulação de autenticação
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (email && password) {
-      // Salvar dados do usuário no localStorage para simulação
-      const userData = {
-        name: email.includes("admin") ? "Administrador" : "José da Silva",
+
+    // Mock de usuários baseado no email
+    let user;
+    if (email.includes("admin")) {
+      user = {
+        name: "João Santos",
         email: email,
-        role: email.includes("admin") ? "Administrador" : "Operador",
+        role: "Administrador",
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
       };
-      localStorage.setItem("user", JSON.stringify(userData));
-      
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Bem-vindo, ${userData.name}`,
-      });
-      
-      navigate("/dashboard");
+    } else if (email.includes("trafego")) {
+      user = {
+        name: "Maria Silva", 
+        email: email,
+        role: "Tráfego",
+        avatar: "https://images.unsplash.com/photo-1494790108755-2616b332c1e9?w=150&h=150&fit=crop&crop=face"
+      };
     } else {
-      toast({
-        title: "Erro no login",
-        description: "Por favor, preencha todos os campos.",
-        variant: "destructive",
-      });
+      user = {
+        name: "Carlos Oliveira",
+        email: email,
+        role: "Mecânico", 
+        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+      };
     }
-    
+
+    localStorage.setItem("user", JSON.stringify(user));
+
+    toast({
+      title: "Login realizado!",
+      description: `Bem-vindo, ${user.name}!`,
+    });
+
+    navigate("/dashboard");
     setIsLoading(false);
   };
 
@@ -55,52 +64,53 @@ const Login = () => {
           <img 
             src="/lovable-uploads/b7e8b7f6-44a9-4caf-82c7-87c7325cddb2.png" 
             alt="Sotero Ambiental" 
-            className="h-20 mx-auto mb-4"
+            className="h-24 mx-auto mb-6"
           />
-          <h1 className="text-2xl font-bold text-white mb-2">Sistema SOS</h1>
-          <p className="text-blue-100">Gestão de Veículos em Tempo Real</p>
+          <h1 className="text-3xl font-bold text-white">Sistema SOS</h1>
+          <p className="text-sotero-blue-light mt-2">Gestão de Manutenção de Veículos</p>
         </div>
 
-        <Card className="shadow-xl border-0">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Entrar no Sistema</CardTitle>
-            <CardDescription className="text-center">
-              Digite suas credenciais para acessar o painel
+        <Card>
+          <CardHeader>
+            <CardTitle>Acesso ao Sistema</CardTitle>
+            <CardDescription>
+              Digite suas credenciais para entrar
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail ou Usuário</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu.email@sotero.com.br"
+                  placeholder="seu.email@soteroambiental.com.br"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
+              
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-sotero-blue hover:bg-sotero-blue-light"
+
+              <Button
+                type="submit"
+                className="w-full bg-sotero-green hover:bg-sotero-green-light"
                 disabled={isLoading}
               >
                 {isLoading ? "Entrando..." : "Entrar"}
               </Button>
-              
+
               <div className="text-center">
                 <a href="#" className="text-sm text-sotero-blue hover:underline">
                   Esqueci minha senha
@@ -110,8 +120,11 @@ const Login = () => {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6 text-blue-100 text-sm">
-          <p>Dica: Use "admin@sotero.com" para acesso de administrador</p>
+        <div className="mt-8 text-center text-white text-sm">
+          <p>Dica para teste:</p>
+          <p>• admin@teste.com (Administrador)</p>
+          <p>• trafego@teste.com (Tráfego)</p>
+          <p>• mecanico@teste.com (Mecânico)</p>
         </div>
       </div>
     </div>

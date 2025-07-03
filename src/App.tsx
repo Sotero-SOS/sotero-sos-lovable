@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import NovoSOS from "./pages/NovoSOS";
 import Veiculos from "./pages/Veiculos";
 import Perfil from "./pages/Perfil";
+import CadastroUsuarios from "./pages/CadastroUsuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Veiculos />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/cadastro-usuarios" 
+            element={
+              <ProtectedRoute>
+                <CadastroUsuarios />
               </ProtectedRoute>
             } 
           />

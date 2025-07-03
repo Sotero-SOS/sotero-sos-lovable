@@ -1,12 +1,14 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Camera, Lock } from "lucide-react";
 
 interface User {
   name: string;
@@ -19,11 +21,18 @@ interface User {
 const Perfil = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
   const [formData, setFormData] = useState({
     name: "",
     email: "", 
     phone: ""
   });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +73,62 @@ const Perfil = () => {
     setIsEditing(false);
   };
 
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (user) {
+          const updatedUser = { ...user, avatar: result };
+          setUser(updatedUser);
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+          toast({
+            title: "Foto atualizada!",
+            description: "Sua foto de perfil foi alterada com sucesso.",
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePasswordChange = () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Erro!",
+        description: "As senhas não coincidem.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Erro!",
+        description: "A nova senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Senha alterada!",
+      description: "Sua senha foi alterada com sucesso.",
+    });
+
+    setShowPasswordDialog(false);
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: ""
+    });
+  };
+
   if (!user) {
     return <div>Carregando...</div>;
   }
@@ -78,12 +143,24 @@ const Perfil = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback className="text-lg">
-                {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-20 w-20 cursor-pointer hover:opacity-80 transition-opacity" onClick={handlePhotoClick}>
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="text-lg">
+                  {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-1 -right-1 bg-sotero-blue text-white rounded-full p-1 cursor-pointer hover:bg-sotero-blue-light transition-colors" onClick={handlePhotoClick}>
+                <Camera className="h-3 w-3" />
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+            </div>
             <div>
               <CardTitle className="flex items-center gap-2">
                 {user.name}
@@ -146,7 +223,12 @@ const Perfil = () => {
                 <Button onClick={() => setIsEditing(true)} className="bg-sotero-blue hover:bg-sotero-blue-light">
                   Editar Perfil
                 </Button>
-                <Button variant="outline">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPasswordDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Lock className="h-4 w-4" />
                   Alterar Senha
                 </Button>
               </>
@@ -184,6 +266,55 @@ const Perfil = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog para alterar senha */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar Senha</DialogTitle>
+            <DialogDescription>
+              Para sua segurança, confirme sua senha atual e defina uma nova senha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Senha Atual</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">Nova Senha</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handlePasswordChange} className="bg-sotero-blue hover:bg-sotero-blue-light">
+              Alterar Senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

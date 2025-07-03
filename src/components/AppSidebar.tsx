@@ -4,7 +4,8 @@ import {
   LayoutDashboard, 
   AlertCircle, 
   Circle, 
-  User 
+  User,
+  UserPlus
 } from "lucide-react";
 import {
   Sidebar,
@@ -25,21 +26,31 @@ const menuItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
+    allowedRoles: ["Administrador", "Tráfego", "Mecânico"]
   },
   {
     title: "Iniciar SOS",
     url: "/novo-sos",
     icon: AlertCircle,
+    allowedRoles: ["Administrador", "Tráfego"]
   },
   {
     title: "Veículos",
     url: "/veiculos",
     icon: Circle,
+    allowedRoles: ["Administrador", "Tráfego", "Mecânico"]
+  },
+  {
+    title: "Cadastro de Usuários",
+    url: "/cadastro-usuarios",
+    icon: UserPlus,
+    allowedRoles: ["Administrador"]
   },
   {
     title: "Perfil",
     url: "/perfil",
     icon: User,
+    allowedRoles: ["Administrador", "Tráfego", "Mecânico"]
   },
 ];
 
@@ -49,6 +60,16 @@ export function AppSidebar() {
   const location = useLocation();
 
   const isCollapsed = state === "collapsed";
+
+  // Recuperar dados do usuário do localStorage
+  const userData = localStorage.getItem("user");
+  const user = userData ? JSON.parse(userData) : null;
+  const userRole = user?.role || "Tráfego";
+
+  // Filtrar itens do menu baseado na permissão do usuário
+  const filteredMenuItems = menuItems.filter(item => 
+    item.allowedRoles.includes(userRole)
+  );
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -62,7 +83,7 @@ export function AppSidebar() {
           <img 
             src="/lovable-uploads/b7e8b7f6-44a9-4caf-82c7-87c7325cddb2.png" 
             alt="Sotero Ambiental" 
-            className={`transition-all duration-200 ${isCollapsed ? "h-8" : "h-12"} mx-auto`}
+            className={`transition-all duration-200 ${isCollapsed ? "h-10" : "h-16"} mx-auto`}
           />
         </div>
         
@@ -72,7 +93,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild

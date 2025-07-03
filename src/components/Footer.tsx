@@ -8,12 +8,12 @@ export function Footer() {
             <img 
               src="/lovable-uploads/bb91b581-7de6-47fa-a14f-a64304b8b3d3.png" 
               alt="UniJorge" 
-              className="h-8"
+              className="h-12"
             />
             <img 
               src="/lovable-uploads/e6d812d0-e170-42d8-a965-1a8961d7b294.png" 
               alt="NITE" 
-              className="h-8"
+              className="h-12"
             />
           </div>
           
