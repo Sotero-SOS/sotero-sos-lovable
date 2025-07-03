@@ -9,7 +9,161 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sos_calls: {
+        Row: {
+          completion_time: string | null
+          created_at: string | null
+          description: string | null
+          diagnostico_compactador: string[] | null
+          diagnostico_eletrica: string[] | null
+          diagnostico_mecanico: string[] | null
+          diagnostico_suspensao: string[] | null
+          driver_name: string
+          estimated_time: number | null
+          id: string
+          location: string
+          outros_problemas: string | null
+          pneu_furado: boolean | null
+          pneu_posicoes: string[] | null
+          problem_type: string | null
+          request_time: string | null
+          status: Database["public"]["Enums"]["sos_status"] | null
+          updated_at: string | null
+          user_id: string | null
+          vehicle_id: string | null
+          vehicle_plate: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          completion_time?: string | null
+          created_at?: string | null
+          description?: string | null
+          diagnostico_compactador?: string[] | null
+          diagnostico_eletrica?: string[] | null
+          diagnostico_mecanico?: string[] | null
+          diagnostico_suspensao?: string[] | null
+          driver_name: string
+          estimated_time?: number | null
+          id?: string
+          location: string
+          outros_problemas?: string | null
+          pneu_furado?: boolean | null
+          pneu_posicoes?: string[] | null
+          problem_type?: string | null
+          request_time?: string | null
+          status?: Database["public"]["Enums"]["sos_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+          vehicle_id?: string | null
+          vehicle_plate: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          completion_time?: string | null
+          created_at?: string | null
+          description?: string | null
+          diagnostico_compactador?: string[] | null
+          diagnostico_eletrica?: string[] | null
+          diagnostico_mecanico?: string[] | null
+          diagnostico_suspensao?: string[] | null
+          driver_name?: string
+          estimated_time?: number | null
+          id?: string
+          location?: string
+          outros_problemas?: string | null
+          pneu_furado?: boolean | null
+          pneu_posicoes?: string[] | null
+          problem_type?: string | null
+          request_time?: string | null
+          status?: Database["public"]["Enums"]["sos_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+          vehicle_id?: string | null
+          vehicle_plate?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sos_calls_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          created_at: string | null
+          driver_name: string
+          id: string
+          last_activity: string | null
+          location: string | null
+          maintenance_type: string | null
+          plate: string
+          status: string | null
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          driver_name: string
+          id?: string
+          last_activity?: string | null
+          location?: string | null
+          maintenance_type?: string | null
+          plate: string
+          status?: string | null
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          driver_name?: string
+          id?: string
+          last_activity?: string | null
+          location?: string | null
+          maintenance_type?: string | null
+          plate?: string
+          status?: string | null
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +172,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      sos_status: "waiting" | "in-progress" | "completed" | "overdue"
+      user_role: "admin" | "trafego" | "mecanico"
+      vehicle_type: "Truck" | "Super Toco" | "Agilix" | "Triciclo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +289,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      sos_status: ["waiting", "in-progress", "completed", "overdue"],
+      user_role: ["admin", "trafego", "mecanico"],
+      vehicle_type: ["Truck", "Super Toco", "Agilix", "Triciclo"],
+    },
   },
 } as const

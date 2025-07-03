@@ -1,129 +1,30 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SOSCard } from "@/components/SOSCard";
 import { useToast } from "@/hooks/use-toast";
-
-// Dados simulados de chamados SOS atualizados
-const mockSOSData = [
-  {
-    id: "1",
-    vehicleType: "Truck",
-    vehiclePlate: "224009",
-    driverName: "José da Silva",
-    location: "Rua São Jorge, Itapuã",
-    problemType: "Pane elétrica",
-    description: "Sistema elétrico apresentou falha durante coleta",
-    requestTime: "30/06/2025 - 08:14",
-    estimatedTime: 30,
-    status: "overdue" as const,
-    completionTime: undefined
-  },
-  {
-    id: "2",
-    vehicleType: "Super Toco",
-    vehiclePlate: "224010",
-    driverName: "Maria Santos",
-    location: "Av. Paralela, Pituaçu",
-    problemType: "Problema mecânico",
-    description: "Motor apresentando ruído anormal",
-    requestTime: "30/06/2025 - 09:30",
-    estimatedTime: 45,
-    status: "in-progress" as const,
-    completionTime: undefined
-  },
-  {
-    id: "3",
-    vehicleType: "Agilix",
-    vehiclePlate: "224011",
-    driverName: "Carlos Oliveira",
-    location: "Centro, Pelourinho",
-    problemType: "Pneu furado",
-    description: "",
-    requestTime: "30/06/2025 - 10:15",
-    estimatedTime: 20,
-    status: "completed" as const,
-    completionTime: "10:35"
-  },
-  {
-    id: "4",
-    vehicleType: "Triciclo",
-    vehiclePlate: "224012",
-    driverName: "Ana Costa",
-    location: "Barra, Ondina",
-    problemType: "Falha no sistema",
-    description: "Sistema de coleta não está funcionando",
-    requestTime: "30/06/2025 - 11:00",
-    estimatedTime: 25,
-    status: "waiting" as const,
-    completionTime: undefined
-  }
-];
+import { useSOSCalls } from "@/hooks/useSOSCalls";
 
 const Dashboard = () => {
-  const [sosData, setSOSData] = useState(mockSOSData);
   const [filter, setFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const { sosCalls, isLoading, updateSOSCall } = useSOSCalls();
 
-  // Verificar localStorage para novos chamados SOS
-  useEffect(() => {
-    const checkForNewSOS = () => {
-      const newSOSData = localStorage.getItem("newSOS");
-      if (newSOSData) {
-        const parsedSOS = JSON.parse(newSOSData);
-        const newSOS = {
-          id: Date.now().toString(),
-          vehicleType: parsedSOS.vehicleType,
-          vehiclePlate: parsedSOS.vehiclePlate,
-          driverName: parsedSOS.driverName,
-          location: parsedSOS.location,
-          problemType: "Diagnóstico técnico",
-          description: parsedSOS.outro || "Chamado registrado com diagnóstico completo",
-          requestTime: new Date().toLocaleString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit', 
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          }),
-          estimatedTime: 30,
-          status: "waiting" as const,
-          completionTime: undefined
-        };
-        
-        setSOSData(prev => [newSOS, ...prev]);
-        localStorage.removeItem("newSOS");
-        
-        toast({
-          title: "Novo SOS Registrado!",
-          description: `Chamado para veículo ${parsedSOS.vehiclePlate} foi adicionado ao dashboard.`,
-        });
-      }
-    };
-
-    // Verificar imediatamente e depois a cada 2 segundos
-    checkForNewSOS();
-    const interval = setInterval(checkForNewSOS, 2000);
-    
-    return () => clearInterval(interval);
-  }, [toast]);
-
-  const filteredData = sosData.filter(sos => {
+  const filteredData = sosCalls.filter(sos => {
     const matchesFilter = filter === "all" || sos.status === filter;
-    const matchesSearch = sos.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         sos.driverName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = sos.vehicle_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         sos.driver_name?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
   const statusCounts = {
-    all: sosData.length,
-    waiting: sosData.filter(s => s.status === "waiting").length,
-    "in-progress": sosData.filter(s => s.status === "in-progress").length,
-    completed: sosData.filter(s => s.status === "completed").length,
-    overdue: sosData.filter(s => s.status === "overdue").length,
+    all: sosCalls.length,
+    waiting: sosCalls.filter(s => s.status === "waiting").length,
+    "in-progress": sosCalls.filter(s => s.status === "in-progress").length,
+    completed: sosCalls.filter(s => s.status === "completed").length,
+    overdue: sosCalls.filter(s => s.status === "overdue").length,
   };
 
   const handleViewDetails = (id: string) => {
@@ -133,18 +34,39 @@ const Dashboard = () => {
     });
   };
 
-  const handleComplete = (id: string) => {
-    setSOSData(prev => prev.map(sos => 
-      sos.id === id 
-        ? { ...sos, status: "completed" as const, completionTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }
-        : sos
-    ));
-    
-    toast({
-      title: "SOS Finalizado",
-      description: "Chamado marcado como concluído com sucesso!",
-    });
+  const handleComplete = async (id: string) => {
+    try {
+      await updateSOSCall.mutateAsync({
+        id,
+        updates: {
+          status: "completed",
+          completion_time: new Date().toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
+        }
+      });
+      
+      toast({
+        title: "SOS Finalizado",
+        description: "Chamado marcado como concluído com sucesso!",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível finalizar o chamado. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Carregando chamados...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -200,7 +122,7 @@ const Dashboard = () => {
 
         <div className="w-full sm:w-auto">
           <Input
-            placeholder="Buscar por código ou motorista..."
+            placeholder="Buscar por prefixo ou motorista..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full sm:w-64"
