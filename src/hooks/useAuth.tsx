@@ -45,7 +45,7 @@ export const useAuth = () => {
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
 
       setUser({ ...authUser, profile: profile || undefined });
     } catch (error) {
