@@ -17,6 +17,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          requires_password_reset: boolean | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
         }
@@ -27,6 +28,7 @@ export type Database = {
           full_name: string
           id: string
           phone?: string | null
+          requires_password_reset?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
@@ -37,6 +39,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          requires_password_reset?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
         }
@@ -169,7 +172,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_user_with_password: {
+        Args: {
+          user_email: string
+          user_password: string
+          user_full_name: string
+          user_phone?: string
+          user_role?: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: Json
+      }
     }
     Enums: {
       sos_status: "waiting" | "in-progress" | "completed" | "overdue"

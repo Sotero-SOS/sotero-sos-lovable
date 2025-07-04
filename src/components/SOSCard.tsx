@@ -1,8 +1,8 @@
 
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Circle, AlertCircle } from "lucide-react";
+import { Clock, MapPin, User, CheckCircle, Eye } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type SOSCall = Tables<'sos_calls'>;
@@ -13,135 +13,140 @@ interface SOSCardProps {
   onComplete: (id: string) => void;
 }
 
-const statusConfig = {
-  waiting: { 
-    label: "Em espera", 
-    color: "bg-status-info text-white", 
-    icon: Circle 
-  },
-  "in-progress": { 
-    label: "Em atendimento", 
-    color: "bg-status-warning text-white", 
-    icon: AlertCircle 
-  },
-  completed: { 
-    label: "Finalizado", 
-    color: "bg-status-success text-white", 
-    icon: Circle 
-  },
-  overdue: { 
-    label: "Atrasado", 
-    color: "bg-status-danger text-white animate-pulse-red", 
-    icon: AlertCircle 
-  },
-};
+export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
+  const getStatusColor = (status: string | null) => {
+    switch (status) {
+      case "waiting": return "bg-blue-100 text-blue-800";
+      case "in-progress": return "bg-yellow-100 text-yellow-800";
+      case "completed": return "bg-green-100 text-green-800";
+      case "overdue": return "bg-red-100 text-red-800 animate-pulse";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
 
-const vehicleIcons = {
-  "Truck": "🚛",
-  "Super Toco": "🚛",
-  "Agilix": "🚛",
-  "Triciclo": "🛺"
-};
+  const getStatusText = (status: string | null) => {
+    switch (status) {
+      case "waiting": return "Em Espera";
+      case "in-progress": return "Em Atendimento";
+      case "completed": return "Finalizado";
+      case "overdue": return "Atrasado";
+      default: return "Status não definido";
+    }
+  };
 
-export function SOSCard({ sos, onViewDetails, onComplete }: SOSCardProps) {
-  const statusInfo = statusConfig[sos.status || 'waiting'];
-  const vehicleIcon = vehicleIcons[sos.vehicle_type as keyof typeof vehicleIcons] || "🚛";
+  const formatTime = (timeString: string | null) => {
+    if (!timeString) return "Não informado";
+    try {
+      return new Date(timeString).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return timeString;
+    }
+  };
 
-  const formatDateTime = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Não informado";
+    try {
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    } catch {
+      return "Data inválida";
+    }
   };
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
       <CardContent className="p-6">
-        {/* Seção 1 - Veículo */}
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-2xl">{vehicleIcon}</span>
-          <div>
-            <h3 className="font-semibold text-lg">{sos.vehicle_plate}</h3>
-            <p className="text-sm text-gray-600">{sos.vehicle_type}</p>
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="text-2xl">🚛</div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900">
+                {sos.vehicle_plate || "Veículo não identificado"}
+              </h3>
+              <p className="text-sm text-gray-600">
+                {sos.vehicle_type || "Tipo não informado"}
+              </p>
+            </div>
           </div>
+          <Badge className={getStatusColor(sos.status)}>
+            {getStatusText(sos.status)}
+          </Badge>
         </div>
 
-        {/* Seção 2 - Dados do Chamado */}
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Data/Hora</p>
-              <p className="text-sm text-gray-600">{formatDateTime(sos.request_time)}</p>
+        <div className="space-y-3 mb-4">
+          <div className="flex items-center gap-2 text-sm">
+            <User className="h-4 w-4 text-gray-500" />
+            <span>{sos.driver_name || "Motorista não informado"}</span>
+          </div>
+          
+          {sos.location && (
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="h-4 w-4 text-gray-500" />
+              <span>{sos.location}</span>
             </div>
-            <Badge className={statusInfo.color}>
-              <statusInfo.icon className="w-3 h-3 mr-1" />
-              {statusInfo.label}
-            </Badge>
-          </div>
+          )}
           
-          <div>
-            <p className="text-sm font-medium text-gray-900">Localização</p>
-            <p className="text-sm text-gray-600">{sos.location}</p>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <span>
+              Solicitado: {formatDate(sos.created_at)} às {formatTime(sos.request_time)}
+            </span>
           </div>
-          
-          <div>
-            <p className="text-sm font-medium text-gray-900">Motorista</p>
-            <p className="text-sm text-gray-600">{sos.driver_name}</p>
-          </div>
-          
-          <div>
-            <p className="text-sm font-medium text-gray-900">Problema</p>
-            <p className="text-sm text-gray-600">{sos.problem_type}</p>
-          </div>
-          
-          {sos.description && (
-            <div>
-              <p className="text-sm font-medium text-gray-900">Descrição</p>
-              <p className="text-sm text-gray-600">{sos.description}</p>
+
+          {sos.estimated_time && (
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4 text-blue-500" />
+              <span>Tempo estimado: {sos.estimated_time} min</span>
+            </div>
+          )}
+
+          {sos.completion_time && sos.status === "completed" && (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <CheckCircle className="h-4 w-4" />
+              <span>Finalizado às {sos.completion_time}</span>
             </div>
           )}
         </div>
 
-        {/* Seção 3 - Status e Ações */}
-        <div className="border-t pt-4">
-          <div className="flex justify-between items-center mb-3">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Tempo estimado</p>
-              <p className="text-sm text-gray-600">{sos.estimated_time} min</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">Conclusão</p>
-              <p className="text-sm text-gray-600">
-                {sos.completion_time || "Em andamento..."}
-              </p>
-            </div>
+        {sos.problem_type && (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-500 mb-1">TIPO DE PROBLEMA</p>
+            <p className="text-sm">{sos.problem_type}</p>
           </div>
+        )}
+
+        {sos.description && (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-500 mb-1">DESCRIÇÃO</p>
+            <p className="text-sm text-gray-700 line-clamp-2">{sos.description}</p>
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-4 border-t">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onViewDetails(sos.id)}
+            className="flex-1 flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            Ver Detalhes
+          </Button>
           
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => onViewDetails(sos.id)}
-              className="flex-1"
+          {sos.status !== "completed" && (
+            <Button
+              size="sm"
+              onClick={() => onComplete(sos.id)}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
             >
-              🔍 Ver detalhes
+              <CheckCircle className="h-4 w-4" />
+              Finalizar
             </Button>
-            {sos.status !== 'completed' && (
-              <Button 
-                size="sm" 
-                onClick={() => onComplete(sos.id)}
-                className="flex-1 bg-sotero-green hover:bg-sotero-green-light"
-              >
-                ✅ Finalizar SOS
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
-}
+};

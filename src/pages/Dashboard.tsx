@@ -5,17 +5,19 @@ import { Button } from "@/components/ui/button";
 import { SOSCard } from "@/components/SOSCard";
 import { useToast } from "@/hooks/use-toast";
 import { useSOSCalls } from "@/hooks/useSOSCalls";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ErrorMessage } from "@/components/ErrorMessage";
 
 const Dashboard = () => {
   const [filter, setFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
-  const { sosCalls, isLoading, updateSOSCall } = useSOSCalls();
+  const { sosCalls, isLoading, error, updateSOSCall } = useSOSCalls();
 
   const filteredData = sosCalls.filter(sos => {
     const matchesFilter = filter === "all" || sos.status === filter;
-    const matchesSearch = sos.vehicle_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         sos.driver_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (sos.vehicle_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         sos.driver_name?.toLowerCase().includes(searchTerm.toLowerCase())) ?? false;
     return matchesFilter && matchesSearch;
   });
 
@@ -63,8 +65,19 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Carregando chamados...</div>
+        <LoadingSpinner size="lg" />
+        <span className="ml-2 text-lg">Carregando chamados...</span>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage 
+        title="Erro ao carregar dashboard"
+        message="Não foi possível carregar os chamados SOS. Verifique sua conexão e tente novamente."
+        className="m-6"
+      />
     );
   }
 
@@ -131,21 +144,30 @@ const Dashboard = () => {
       </div>
 
       {/* Cards de SOS */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredData.map((sos) => (
-          <SOSCard
-            key={sos.id}
-            sos={sos}
-            onViewDetails={handleViewDetails}
-            onComplete={handleComplete}
-          />
-        ))}
-      </div>
-
-      {filteredData.length === 0 && (
+      {filteredData.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredData.map((sos) => (
+            <SOSCard
+              key={sos.id}
+              sos={sos}
+              onViewDetails={handleViewDetails}
+              onComplete={handleComplete}
+            />
+          ))}
+        </div>
+      ) : (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">Nenhum chamado encontrado</p>
-          <p className="text-gray-400">Tente ajustar os filtros ou termo de busca</p>
+          <p className="text-gray-500 text-lg">
+            {sosCalls.length === 0 
+              ? "Nenhum chamado SOS encontrado" 
+              : "Nenhum chamado encontrado para os filtros aplicados"
+            }
+          </p>
+          {sosCalls.length === 0 ? (
+            <p className="text-gray-400">Os chamados aparecerão aqui quando forem criados</p>
+          ) : (
+            <p className="text-gray-400">Tente ajustar os filtros ou termo de busca</p>
+          )}
         </div>
       )}
     </div>

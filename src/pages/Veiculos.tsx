@@ -10,73 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { useVehicles } from "@/hooks/useVehicles";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ErrorMessage } from "@/components/ErrorMessage";
+import type { Tables } from "@/integrations/supabase/types";
 
-const mockVehicles = {
-  circulating: [
-    {
-      id: "1",
-      type: "Truck",
-      plate: "224009",
-      lastActivity: "30/06/2025 - 11:30",
-      location: "Rota Itapuã - Centro",
-      driver: "José da Silva"
-    },
-    {
-      id: "2", 
-      type: "Super Toco",
-      plate: "224015",
-      lastActivity: "30/06/2025 - 11:15",
-      location: "Av. Paralela - Pituaçu",
-      driver: "Maria Santos"
-    },
-    {
-      id: "3",
-      type: "Agilix",
-      plate: "224032", 
-      lastActivity: "30/06/2025 - 11:45",
-      location: "Centro - Pelourinho",
-      driver: "Carlos Oliveira"
-    }
-  ],
-  inactive: [
-    {
-      id: "4",
-      type: "Triciclo",
-      plate: "224048",
-      lastActivity: "29/06/2025 - 18:00",
-      location: "Base Operacional",
-      driver: "Ana Costa"
-    },
-    {
-      id: "5",
-      type: "Truck",
-      plate: "224056",
-      lastActivity: "29/06/2025 - 17:30",
-      location: "Base Operacional", 
-      driver: "Pedro Santos"
-    }
-  ],
-  maintenance: [
-    {
-      id: "6",
-      type: "Super Toco",
-      plate: "224061",
-      lastActivity: "28/06/2025 - 16:00",
-      location: "Oficina Mecânica",
-      driver: "Roberto Lima",
-      maintenanceType: "Revisão preventiva"
-    },
-    {
-      id: "7",
-      type: "Agilix",
-      plate: "224078",
-      lastActivity: "27/06/2025 - 14:30", 
-      location: "Oficina Elétrica",
-      driver: "Fernanda Silva",
-      maintenanceType: "Reparo sistema elétrico"
-    }
-  ]
-};
+type Vehicle = Tables<'vehicles'>;
 
 const vehicleIcons = {
   "Truck": "🚛",
@@ -86,146 +25,170 @@ const vehicleIcons = {
 };
 
 const Veiculos = () => {
+  const { vehicles, isLoading, error, createVehicle, updateVehicle, deleteVehicle } = useVehicles();
   const [activeTab, setActiveTab] = useState("circulating");
-  const [vehicles, setVehicles] = useState(mockVehicles);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState<any>(null);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [vehicleForm, setVehicleForm] = useState({
-    type: "",
+    type: "" as "Truck" | "Super Toco" | "Agilix" | "Triciclo" | "",
     plate: "",
-    driver: "",
-    status: "circulating"
+    driver_name: "",
+    status: "circulating",
+    maintenance_type: ""
   });
   const { toast } = useToast();
 
-  const handleAddVehicle = () => {
-    if (!vehicleForm.type || !vehicleForm.plate || !vehicleForm.driver) {
+  // Filtrar veículos por status
+  const vehiclesByStatus = {
+    circulating: vehicles.filter(v => v.status === "circulating"),
+    inactive: vehicles.filter(v => v.status === "inactive"),
+    maintenance: vehicles.filter(v => v.status === "maintenance")
+  };
+
+  const handleAddVehicle = async () => {
+    if (!vehicleForm.type || !vehicleForm.plate || !vehicleForm.driver_name) {
       toast({
         title: "Erro!",
-        description: "Todos os campos são obrigatórios.",
+        description: "Todos os campos obrigatórios devem ser preenchidos.",
         variant: "destructive"
       });
       return;
     }
 
-    const newVehicle = {
-      id: Date.now().toString(),
-      type: vehicleForm.type,
-      plate: vehicleForm.plate,
-      driver: vehicleForm.driver,
-      lastActivity: new Date().toLocaleString('pt-BR'),
-      location: "Base Operacional"
-    };
+    try {
+      await createVehicle.mutateAsync({
+        type: vehicleForm.type,
+        plate: vehicleForm.plate,
+        driver_name: vehicleForm.driver_name,
+        status: vehicleForm.status,
+        maintenance_type: vehicleForm.status === "maintenance" ? vehicleForm.maintenance_type : null,
+        location: "Base Operacional"
+      });
 
-    const status = vehicleForm.status as keyof typeof vehicles;
-    setVehicles(prev => ({
-      ...prev,
-      [status]: [...prev[status], newVehicle]
-    }));
+      setVehicleForm({ type: "", plate: "", driver_name: "", status: "circulating", maintenance_type: "" });
+      setShowAddDialog(false);
 
-    setVehicleForm({ type: "", plate: "", driver: "", status: "circulating" });
-    setShowAddDialog(false);
-
-    toast({
-      title: "Veículo adicionado!",
-      description: `Veículo ${vehicleForm.plate} foi adicionado com sucesso.`,
-    });
+      toast({
+        title: "Veículo adicionado!",
+        description: `Veículo ${vehicleForm.plate} foi adicionado com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao adicionar veículo",
+        description: "Não foi possível adicionar o veículo. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleEditVehicle = (vehicle: any) => {
+  const handleEditVehicle = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
     setVehicleForm({
       type: vehicle.type,
       plate: vehicle.plate,
-      driver: vehicle.driver,
-      status: activeTab
+      driver_name: vehicle.driver_name,
+      status: vehicle.status || "circulating",
+      maintenance_type: vehicle.maintenance_type || ""
     });
     setShowEditDialog(true);
   };
 
-  const handleUpdateVehicle = () => {
-    if (!vehicleForm.type || !vehicleForm.plate || !vehicleForm.driver) {
+  const handleUpdateVehicle = async () => {
+    if (!editingVehicle || !vehicleForm.type || !vehicleForm.plate || !vehicleForm.driver_name) {
       toast({
         title: "Erro!",
-        description: "Todos os campos são obrigatórios.",
+        description: "Todos os campos obrigatórios devem ser preenchidos.",
         variant: "destructive"
       });
       return;
     }
 
-    const updatedVehicle = {
-      ...editingVehicle,
-      type: vehicleForm.type,
-      plate: vehicleForm.plate,
-      driver: vehicleForm.driver
-    };
+    try {
+      await updateVehicle.mutateAsync({
+        id: editingVehicle.id,
+        updates: {
+          type: vehicleForm.type,
+          plate: vehicleForm.plate,
+          driver_name: vehicleForm.driver_name,
+          status: vehicleForm.status,
+          maintenance_type: vehicleForm.status === "maintenance" ? vehicleForm.maintenance_type : null
+        }
+      });
 
-    const currentStatus = activeTab as keyof typeof vehicles;
-    setVehicles(prev => ({
-      ...prev,
-      [currentStatus]: prev[currentStatus].map(v => 
-        v.id === editingVehicle.id ? updatedVehicle : v
-      )
-    }));
+      setShowEditDialog(false);
+      setEditingVehicle(null);
 
-    setShowEditDialog(false);
-    setEditingVehicle(null);
-
-    toast({
-      title: "Veículo atualizado!",
-      description: `Veículo ${vehicleForm.plate} foi atualizado com sucesso.`,
-    });
+      toast({
+        title: "Veículo atualizado!",
+        description: `Veículo ${vehicleForm.plate} foi atualizado com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao atualizar veículo",
+        description: "Não foi possível atualizar o veículo. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleDeleteVehicle = (vehicleId: string) => {
-    const currentStatus = activeTab as keyof typeof vehicles;
-    setVehicles(prev => ({
-      ...prev,
-      [currentStatus]: prev[currentStatus].filter(v => v.id !== vehicleId)
-    }));
+  const handleDeleteVehicle = async (vehicleId: string, vehiclePlate: string) => {
+    if (!confirm(`Tem certeza que deseja remover o veículo ${vehiclePlate}?`)) return;
 
-    toast({
-      title: "Veículo removido",
-      description: "O veículo foi removido do sistema.",
-    });
+    try {
+      await deleteVehicle.mutateAsync(vehicleId);
+      toast({
+        title: "Veículo removido",
+        description: `Veículo ${vehiclePlate} foi removido do sistema.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao remover veículo",
+        description: "Não foi possível remover o veículo. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
 
-  const VehicleCard = ({ vehicle, showMaintenance = false }: { vehicle: any, showMaintenance?: boolean }) => (
+  const VehicleCard = ({ vehicle, showMaintenance = false }: { vehicle: Vehicle, showMaintenance?: boolean }) => (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span className="text-2xl">
-              {vehicleIcons[vehicle.type as keyof typeof vehicleIcons]}
+              {vehicleIcons[vehicle.type]}
             </span>
             <div>
               <h3 className="font-semibold text-lg">{vehicle.plate}</h3>
               <p className="text-sm text-gray-600">{vehicle.type}</p>
             </div>
           </div>
-          <Badge variant={activeTab === "circulating" ? "default" : activeTab === "maintenance" ? "destructive" : "secondary"}>
-            {activeTab === "circulating" ? "Ativo" : activeTab === "maintenance" ? "Manutenção" : "Inativo"}
+          <Badge variant={vehicle.status === "circulating" ? "default" : vehicle.status === "maintenance" ? "destructive" : "secondary"}>
+            {vehicle.status === "circulating" ? "Ativo" : vehicle.status === "maintenance" ? "Manutenção" : "Inativo"}
           </Badge>
         </div>
         
         <div className="mt-4 space-y-2">
           <div>
             <p className="text-xs font-medium text-gray-500">MOTORISTA</p>
-            <p className="text-sm">{vehicle.driver}</p>
+            <p className="text-sm">{vehicle.driver_name}</p>
           </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500">LOCALIZAÇÃO</p>
-            <p className="text-sm">{vehicle.location}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-gray-500">ÚLTIMA ATIVIDADE</p>
-            <p className="text-sm">{vehicle.lastActivity}</p>
-          </div>
-          {showMaintenance && vehicle.maintenanceType && (
+          {vehicle.location && (
+            <div>
+              <p className="text-xs font-medium text-gray-500">LOCALIZAÇÃO</p>
+              <p className="text-sm">{vehicle.location}</p>
+            </div>
+          )}
+          {vehicle.last_activity && (
+            <div>
+              <p className="text-xs font-medium text-gray-500">ÚLTIMA ATIVIDADE</p>
+              <p className="text-sm">{new Date(vehicle.last_activity).toLocaleString('pt-BR')}</p>
+            </div>
+          )}
+          {showMaintenance && vehicle.maintenance_type && (
             <div>
               <p className="text-xs font-medium text-gray-500">TIPO DE MANUTENÇÃO</p>
-              <p className="text-sm">{vehicle.maintenanceType}</p>
+              <p className="text-sm">{vehicle.maintenance_type}</p>
             </div>
           )}
         </div>
@@ -245,7 +208,7 @@ const Veiculos = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => handleDeleteVehicle(vehicle.id)}
+            onClick={() => handleDeleteVehicle(vehicle.id, vehicle.plate)}
             className="text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
           >
             <Trash2 className="h-3 w-3" />
@@ -254,6 +217,25 @@ const Veiculos = () => {
       </CardContent>
     </Card>
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <LoadingSpinner size="lg" />
+        <span className="ml-2 text-lg">Carregando veículos...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage 
+        title="Erro ao carregar veículos"
+        message="Não foi possível carregar a lista de veículos. Verifique sua conexão e tente novamente."
+        className="m-6"
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -274,38 +256,56 @@ const Veiculos = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="circulating" className="flex items-center gap-2">
-            🟢 Em Circulação ({vehicles.circulating.length})
+            🟢 Em Circulação ({vehiclesByStatus.circulating.length})
           </TabsTrigger>
           <TabsTrigger value="inactive" className="flex items-center gap-2">
-            ⚫ Inativos ({vehicles.inactive.length})
+            ⚫ Inativos ({vehiclesByStatus.inactive.length})
           </TabsTrigger>
           <TabsTrigger value="maintenance" className="flex items-center gap-2">
-            🔧 Em Manutenção ({vehicles.maintenance.length})
+            🔧 Em Manutenção ({vehiclesByStatus.maintenance.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="circulating" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {vehicles.circulating.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
-          </div>
+          {vehiclesByStatus.circulating.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>Nenhum veículo em circulação</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {vehiclesByStatus.circulating.map((vehicle) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="inactive" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {vehicles.inactive.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} />
-            ))}
-          </div>
+          {vehiclesByStatus.inactive.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>Nenhum veículo inativo</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {vehiclesByStatus.inactive.map((vehicle) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="maintenance" className="mt-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {vehicles.maintenance.map((vehicle) => (
-              <VehicleCard key={vehicle.id} vehicle={vehicle} showMaintenance />
-            ))}
-          </div>
+          {vehiclesByStatus.maintenance.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>Nenhum veículo em manutenção</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {vehiclesByStatus.maintenance.map((vehicle) => (
+                <VehicleCard key={vehicle.id} vehicle={vehicle} showMaintenance />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
@@ -317,7 +317,7 @@ const Veiculos = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-sotero-blue">
-              {vehicles.circulating.length + vehicles.inactive.length + vehicles.maintenance.length}
+              {vehicles.length}
             </div>
             <p className="text-xs text-gray-500">veículos cadastrados</p>
           </CardContent>
@@ -329,7 +329,7 @@ const Veiculos = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-sotero-green">
-              {Math.round((vehicles.circulating.length / (vehicles.circulating.length + vehicles.inactive.length + vehicles.maintenance.length)) * 100)}%
+              {vehicles.length > 0 ? Math.round((vehiclesByStatus.circulating.length / vehicles.length) * 100) : 0}%
             </div>
             <p className="text-xs text-gray-500">dos veículos operando</p>
           </CardContent>
@@ -341,7 +341,7 @@ const Veiculos = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-status-warning">
-              {vehicles.maintenance.length}
+              {vehiclesByStatus.maintenance.length}
             </div>
             <p className="text-xs text-gray-500">veículos parados</p>
           </CardContent>
@@ -359,8 +359,8 @@ const Veiculos = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="vehicleType">Tipo de Veículo</Label>
-              <Select onValueChange={(value) => setVehicleForm(prev => ({ ...prev, type: value }))}>
+              <Label htmlFor="vehicleType">Tipo de Veículo *</Label>
+              <Select onValueChange={(value: "Truck" | "Super Toco" | "Agilix" | "Triciclo") => setVehicleForm(prev => ({ ...prev, type: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
@@ -373,7 +373,7 @@ const Veiculos = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="plate">Código do Veículo</Label>
+              <Label htmlFor="plate">Código do Veículo *</Label>
               <Input
                 id="plate"
                 value={vehicleForm.plate}
@@ -382,19 +382,19 @@ const Veiculos = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="driver">Nome do Motorista</Label>
+              <Label htmlFor="driver">Nome do Motorista *</Label>
               <Input
                 id="driver"
-                value={vehicleForm.driver}
-                onChange={(e) => setVehicleForm(prev => ({ ...prev, driver: e.target.value }))}
+                value={vehicleForm.driver_name}
+                onChange={(e) => setVehicleForm(prev => ({ ...prev, driver_name: e.target.value }))}
                 placeholder="Nome completo"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select onValueChange={(value) => setVehicleForm(prev => ({ ...prev, status: value }))}>
+              <Label htmlFor="status">Status *</Label>
+              <Select value={vehicleForm.status} onValueChange={(value) => setVehicleForm(prev => ({ ...prev, status: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="circulating">🟢 Em Circulação</SelectItem>
@@ -403,13 +403,35 @@ const Veiculos = () => {
                 </SelectContent>
               </Select>
             </div>
+            {vehicleForm.status === "maintenance" && (
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_type">Tipo de Manutenção</Label>
+                <Input
+                  id="maintenance_type"
+                  value={vehicleForm.maintenance_type}
+                  onChange={(e) => setVehicleForm(prev => ({ ...prev, maintenance_type: e.target.value }))}
+                  placeholder="Ex: Revisão preventiva, Reparo motor, etc."
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleAddVehicle} className="bg-sotero-green hover:bg-sotero-green-light">
-              Adicionar Veículo
+            <Button 
+              onClick={handleAddVehicle} 
+              className="bg-sotero-green hover:bg-sotero-green-light"
+              disabled={createVehicle.isPending}
+            >
+              {createVehicle.isPending ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Adicionando...
+                </>
+              ) : (
+                "Adicionar Veículo"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -426,10 +448,10 @@ const Veiculos = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="editVehicleType">Tipo de Veículo</Label>
-              <Select value={vehicleForm.type} onValueChange={(value) => setVehicleForm(prev => ({ ...prev, type: value }))}>
+              <Label htmlFor="editVehicleType">Tipo de Veículo *</Label>
+              <Select value={vehicleForm.type} onValueChange={(value: "Truck" | "Super Toco" | "Agilix" | "Triciclo") => setVehicleForm(prev => ({ ...prev, type: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Truck">🚛 Truck</SelectItem>
@@ -440,30 +462,63 @@ const Veiculos = () => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editPlate">Código do Veículo</Label>
+              <Label htmlFor="editPlate">Código do Veículo *</Label>
               <Input
                 id="editPlate"
                 value={vehicleForm.plate}
                 onChange={(e) => setVehicleForm(prev => ({ ...prev, plate: e.target.value }))}
-                placeholder="224009"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editDriver">Nome do Motorista</Label>
+              <Label htmlFor="editDriver">Nome do Motorista *</Label>
               <Input
                 id="editDriver"
-                value={vehicleForm.driver}
-                onChange={(e) => setVehicleForm(prev => ({ ...prev, driver: e.target.value }))}
-                placeholder="Nome completo"
+                value={vehicleForm.driver_name}
+                onChange={(e) => setVehicleForm(prev => ({ ...prev, driver_name: e.target.value }))}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="editStatus">Status *</Label>
+              <Select value={vehicleForm.status} onValueChange={(value) => setVehicleForm(prev => ({ ...prev, status: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="circulating">🟢 Em Circulação</SelectItem>
+                  <SelectItem value="inactive">⚫ Inativo</SelectItem>
+                  <SelectItem value="maintenance">🔧 Em Manutenção</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {vehicleForm.status === "maintenance" && (
+              <div className="space-y-2">
+                <Label htmlFor="editMaintenanceType">Tipo de Manutenção</Label>
+                <Input
+                  id="editMaintenanceType"
+                  value={vehicleForm.maintenance_type}
+                  onChange={(e) => setVehicleForm(prev => ({ ...prev, maintenance_type: e.target.value }))}
+                  placeholder="Ex: Revisão preventiva, Reparo motor, etc."
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleUpdateVehicle} className="bg-sotero-blue hover:bg-sotero-blue-light">
-              Atualizar Veículo
+            <Button 
+              onClick={handleUpdateVehicle} 
+              className="bg-sotero-blue hover:bg-sotero-blue-light"
+              disabled={updateVehicle.isPending}
+            >
+              {updateVehicle.isPending ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Atualizando...
+                </>
+              ) : (
+                "Atualizar Veículo"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
