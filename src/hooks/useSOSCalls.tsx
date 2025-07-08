@@ -10,7 +10,7 @@ type SOSCallUpdate = TablesUpdate<'sos_calls'>;
 export const useSOSCalls = () => {
   const queryClient = useQueryClient();
 
-  const { data: sosCalls = [], isLoading, error } = useQuery({
+  const { data: sosCalls = [], isLoading } = useQuery({
     queryKey: ['sos_calls'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -59,7 +59,6 @@ export const useSOSCalls = () => {
   return {
     sosCalls,
     isLoading,
-    error,
     createSOSCall,
     updateSOSCall,
   };
