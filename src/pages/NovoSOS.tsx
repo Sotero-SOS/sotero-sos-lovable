@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useSOSCalls } from "@/hooks/useSOSCalls";
+import { useAuth } from "@/hooks/useAuth";
 
 const NovoSOS = () => {
   const [formData, setFormData] = useState({
@@ -30,24 +32,47 @@ const NovoSOS = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createSOSCall } = useSOSCalls();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulação de envio
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      await createSOSCall.mutateAsync({
+        vehicle_type: formData.vehicleType as "Truck" | "Super Toco" | "Agilix" | "Triciclo",
+        vehicle_plate: formData.vehiclePlate,
+        driver_name: formData.driverName,
+        location: formData.location,
+        problem_type: "Diagnóstico técnico",
+        description: formData.description,
+        diagnostico_eletrica: formData.eletrica.length > 0 ? formData.eletrica : null,
+        diagnostico_mecanico: formData.mecanico.length > 0 ? formData.mecanico : null,
+        diagnostico_compactador: formData.compactador.length > 0 ? formData.compactador : null,
+        diagnostico_suspensao: formData.suspensao.length > 0 ? formData.suspensao : null,
+        pneu_furado: formData.pneuFurado,
+        pneu_posicoes: formData.pneuPosicoes.length > 0 ? formData.pneuPosicoes : null,
+        outros_problemas: formData.outro || null,
+        user_id: user?.id || null,
+        status: "waiting"
+      });
 
-    // Salvar no localStorage para que o Dashboard possa detectar
-    localStorage.setItem("newSOS", JSON.stringify(formData));
+      toast({
+        title: "SOS Iniciado!",
+        description: `Chamado criado para o veículo ${formData.vehiclePlate}. Equipe será notificada.`,
+      });
 
-    toast({
-      title: "SOS Iniciado!",
-      description: `Chamado criado para o veículo ${formData.vehiclePlate}. Equipe será notificada.`,
-    });
-
-    navigate("/dashboard");
-    setIsLoading(false);
+      navigate("/dashboard");
+    } catch (error) {
+      toast({
+        title: "Erro ao criar SOS",
+        description: "Não foi possível criar o chamado. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {

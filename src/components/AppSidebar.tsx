@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   {
@@ -58,21 +59,29 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const isCollapsed = state === "collapsed";
 
-  // Recuperar dados do usuário do localStorage
-  const userData = localStorage.getItem("user");
-  const user = userData ? JSON.parse(userData) : null;
-  const userRole = user?.role || "Tráfego";
+  // Mapear roles do banco para display
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case "admin": return "Administrador";
+      case "trafego": return "Tráfego";
+      case "mecanico": return "Mecânico";
+      default: return "Tráfego";
+    }
+  };
+
+  const userRole = user?.profile?.role ? getRoleDisplayName(user.profile.role) : "Tráfego";
 
   // Filtrar itens do menu baseado na permissão do usuário
   const filteredMenuItems = menuItems.filter(item => 
     item.allowedRoles.includes(userRole)
   );
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 

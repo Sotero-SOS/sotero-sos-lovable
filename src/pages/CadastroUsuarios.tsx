@@ -44,7 +44,7 @@ const CadastroUsuarios = () => {
 
     try {
       await createUser.mutateAsync({
-        id: crypto.randomUUID(), // Em produção, isso seria gerado pelo Supabase Auth
+        id: crypto.randomUUID(), // Temporário - deve ser criado via Supabase Auth
         full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone,
@@ -59,10 +59,11 @@ const CadastroUsuarios = () => {
         title: "Usuário cadastrado!",
         description: `${formData.full_name} foi adicionado ao sistema.`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro ao cadastrar usuário:", error);
       toast({
         title: "Erro ao cadastrar usuário",
-        description: "Não foi possível cadastrar o usuário. Tente novamente.",
+        description: error?.message || "Não foi possível cadastrar o usuário. Tente novamente mais tarde.",
         variant: "destructive"
       });
     }
