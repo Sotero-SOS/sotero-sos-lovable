@@ -58,8 +58,8 @@ const Login = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Acesso ao Sistema</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-center">Acesso ao Sistema</CardTitle>
+            <CardDescription className="text-center">
               Digite suas credenciais para entrar
             </CardDescription>
           </CardHeader>
