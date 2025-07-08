@@ -15,18 +15,26 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('useAuth: Iniciando verificação de autenticação');
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('useAuth: Sessão inicial:', session ? 'Existe' : 'Não existe');
       if (session?.user) {
         fetchUserProfile(session.user);
       } else {
+        console.log('useAuth: Nenhuma sessão encontrada, definindo loading como false');
         setLoading(false);
       }
+    }).catch(error => {
+      console.error('useAuth: Erro ao obter sessão:', error);
+      setLoading(false);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('useAuth: Mudança de estado de auth:', event, session ? 'Sessão existe' : 'Sem sessão');
         if (session?.user) {
           await fetchUserProfile(session.user);
         } else {
@@ -45,7 +53,7 @@ export const useAuth = () => {
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
-        .single();
+        .maybeSingle();
 
       setUser({ ...authUser, profile: profile || undefined });
     } catch (error) {
