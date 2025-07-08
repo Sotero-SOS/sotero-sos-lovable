@@ -17,6 +17,12 @@ export const useAuth = () => {
   useEffect(() => {
     console.log('useAuth: Iniciando verificação de autenticação');
     
+    // Timeout de segurança para evitar loading infinito
+    const timeoutId = setTimeout(() => {
+      console.log('useAuth: Timeout de segurança - definindo loading como false');
+      setLoading(false);
+    }, 10000); // 10 segundos
+    
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('useAuth: Sessão inicial:', session ? 'Existe' : 'Não existe');
@@ -26,17 +32,19 @@ export const useAuth = () => {
         console.log('useAuth: Nenhuma sessão encontrada, definindo loading como false');
         setLoading(false);
       }
+      clearTimeout(timeoutId);
     }).catch(error => {
       console.error('useAuth: Erro ao obter sessão:', error);
       setLoading(false);
+      clearTimeout(timeoutId);
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('useAuth: Mudança de estado de auth:', event, session ? 'Sessão existe' : 'Sem sessão');
         if (session?.user) {
-          await fetchUserProfile(session.user);
+          fetchUserProfile(session.user);
         } else {
           setUser(null);
           setLoading(false);
@@ -44,22 +52,33 @@ export const useAuth = () => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const fetchUserProfile = async (authUser: User) => {
     try {
-      const { data: profile } = await supabase
+      console.log('useAuth: Buscando perfil do usuário:', authUser.id);
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .maybeSingle();
 
-      setUser({ ...authUser, profile: profile || undefined });
+      if (error) {
+        console.error('useAuth: Erro ao buscar perfil:', error);
+        setUser(authUser);
+      } else {
+        console.log('useAuth: Perfil encontrado:', profile ? 'Sim' : 'Não');
+        setUser({ ...authUser, profile: profile || undefined });
+      }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('useAuth: Erro inesperado ao buscar perfil:', error);
       setUser(authUser);
     } finally {
+      console.log('useAuth: Definindo loading como false');
       setLoading(false);
     }
   };

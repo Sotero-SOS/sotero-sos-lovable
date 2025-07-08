@@ -187,6 +187,10 @@ export type Database = {
         }
         Returns: Json
       }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       sos_status: "waiting" | "in-progress" | "completed" | "overdue"

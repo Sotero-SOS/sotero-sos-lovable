@@ -12,8 +12,9 @@ export const LoadingSpinner = ({ size = 'md', className = '' }: LoadingSpinnerPr
   };
 
   return (
-    <div className={`flex items-center justify-center ${className}`}>
+    <div className={`flex flex-col items-center justify-center gap-4 ${className}`}>
       <div className={`animate-spin rounded-full border-2 border-sotero-blue border-t-transparent ${sizeClasses[size]}`} />
+      <p className="text-sotero-blue text-sm font-medium">Carregando...</p>
     </div>
   );
 };

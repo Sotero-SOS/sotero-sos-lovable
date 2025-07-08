@@ -43,6 +43,16 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Cores do Sistema Sotero */
+    --sotero-blue: 217 91% 60%;
+    --sotero-blue-light: 217 91% 70%;
+    --sotero-green: 142 76% 36%;
+    --sotero-green-light: 142 76% 46%;
+    --status-info: 217 91% 60%;
+    --status-warning: 45 93% 47%;
+    --status-success: 142 76% 36%;
+    --status-danger: 0 84% 60%;
   }
 
   .dark {

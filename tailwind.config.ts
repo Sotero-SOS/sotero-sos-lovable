@@ -64,16 +64,16 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				sotero: {
-					blue: '#2563eb',
-					green: '#16a34a',
-					'blue-light': '#3b82f6',
-					'green-light': '#22c55e'
+					blue: 'hsl(var(--sotero-blue))',
+					green: 'hsl(var(--sotero-green))',
+					'blue-light': 'hsl(var(--sotero-blue-light))',
+					'green-light': 'hsl(var(--sotero-green-light))'
 				},
 				status: {
-					danger: '#ef4444',
-					warning: '#f59e0b',
-					success: '#10b981',
-					info: '#3b82f6'
+					danger: 'hsl(var(--status-danger))',
+					warning: 'hsl(var(--status-warning))',
+					success: 'hsl(var(--status-success))',
+					info: 'hsl(var(--status-info))'
 				}
 			},
 			borderRadius: {
