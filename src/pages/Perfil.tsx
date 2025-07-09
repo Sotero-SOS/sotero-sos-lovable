@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,18 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Camera, Lock } from "lucide-react";
-
-interface User {
-  name: string;
-  email: string;
-  role: string;
-  avatar: string;
-  phone?: string;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 const Perfil = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -28,48 +22,48 @@ const Perfil = () => {
     confirmPassword: ""
   });
   const [formData, setFormData] = useState({
-    name: "",
-    email: "", 
-    phone: ""
+    full_name: user?.profile?.full_name || "",
+    email: user?.profile?.email || user?.email || "", 
+    phone: user?.profile?.phone || ""
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setUser({ ...parsedUser, phone: parsedUser.phone || "(71) 99999-9999" });
-      setFormData({
-        name: parsedUser.name,
-        email: parsedUser.email,
-        phone: parsedUser.phone || "(71) 99999-9999"
-      });
-    }
-  }, []);
+  const handleSave = async () => {
+    if (!user?.profile) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.full_name,
+          phone: formData.phone || null
+        })
+        .eq('id', user.id);
 
-  const handleSave = () => {
-    if (user) {
-      const updatedUser = { ...user, ...formData };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      if (error) throw error;
+
       setIsEditing(false);
       
       toast({
         title: "Perfil atualizado!",
         description: "Suas informações foram salvas com sucesso.",
       });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: error.message || "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleCancel = () => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        phone: user.phone || ""
-      });
-    }
+    setFormData({
+      full_name: user?.profile?.full_name || "",
+      email: user?.profile?.email || user?.email || "",
+      phone: user?.profile?.phone || ""
+    });
     setIsEditing(false);
   };
 
@@ -77,27 +71,38 @@ const Perfil = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (!file || !user?.profile) return;
+
+    try {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const result = e.target?.result as string;
-        if (user) {
-          const updatedUser = { ...user, avatar: result };
-          setUser(updatedUser);
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-          toast({
-            title: "Foto atualizada!",
-            description: "Sua foto de perfil foi alterada com sucesso.",
-          });
-        }
+        
+        const { error } = await supabase
+          .from('profiles')
+          .update({ avatar_url: result })
+          .eq('id', user.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Foto atualizada!",
+          description: "Sua foto de perfil foi alterada com sucesso.",
+        });
       };
       reader.readAsDataURL(file);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar foto",
+        description: error.message || "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
     }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         title: "Erro!",
@@ -116,22 +121,45 @@ const Perfil = () => {
       return;
     }
 
-    toast({
-      title: "Senha alterada!",
-      description: "Sua senha foi alterada com sucesso.",
-    });
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
 
-    setShowPasswordDialog(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Senha alterada!",
+        description: "Sua senha foi alterada com sucesso.",
+      });
+
+      setShowPasswordDialog(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao alterar senha",
+        description: error.message || "Tente novamente mais tarde.",
+        variant: "destructive"
+      });
+    }
   };
 
-  if (!user) {
-    return <div>Carregando...</div>;
+  if (!user?.profile) {
+    return <div>Carregando perfil...</div>;
   }
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case "admin": return "Administrador";
+      case "trafego": return "Tráfego";
+      case "mecanico": return "Mecânico";
+      default: return role;
+    }
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -145,9 +173,9 @@ const Perfil = () => {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-20 w-20 cursor-pointer hover:opacity-80 transition-opacity" onClick={handlePhotoClick}>
-                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarImage src={user.profile.avatar_url || ''} alt={user.profile.full_name} />
                 <AvatarFallback className="text-lg">
-                  {user.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  {user.profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-1 -right-1 bg-sotero-blue text-white rounded-full p-1 cursor-pointer hover:bg-sotero-blue-light transition-colors" onClick={handlePhotoClick}>
@@ -163,10 +191,10 @@ const Perfil = () => {
             </div>
             <div>
               <CardTitle className="flex items-center gap-2">
-                {user.name}
-                <Badge variant="secondary">{user.role}</Badge>
+                {user.profile.full_name}
+                <Badge variant="secondary">{getRoleDisplayName(user.profile.role)}</Badge>
               </CardTitle>
-              <CardDescription>{user.email}</CardDescription>
+              <CardDescription>{user.profile.email}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -176,8 +204,8 @@ const Perfil = () => {
               <Label htmlFor="name">Nome Completo</Label>
               <Input
                 id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                value={formData.full_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
                 disabled={!isEditing}
               />
             </div>
@@ -188,8 +216,7 @@ const Perfil = () => {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                disabled={!isEditing}
+                disabled={true}
               />
             </div>
 
@@ -208,7 +235,7 @@ const Perfil = () => {
               <Label>Tipo de Acesso</Label>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-sm">
-                  {user.role}
+                  {getRoleDisplayName(user.profile.role)}
                 </Badge>
                 <span className="text-sm text-gray-500">
                   (Este campo não pode ser alterado)
