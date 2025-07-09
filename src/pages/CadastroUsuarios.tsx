@@ -34,45 +34,29 @@ const CadastroUsuarios = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.full_name || !formData.email || !formData.phone || !formData.role || !formData.password) {
+    if (!formData.full_name || !formData.email || !formData.phone || !formData.role) {
       toast({
         title: "Erro!",
-        description: "Todos os campos são obrigatórios.",
+        description: "Todos os campos obrigatórios devem ser preenchidos.",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      // Por enquanto, vamos apenas criar o perfil diretamente
-      // Em produção, isso deve ser feito via função admin do Supabase
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.password,
-        email_confirm: true,
-        user_metadata: {
+      // Criar apenas o perfil diretamente (não precisamos da senha para isso)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: crypto.randomUUID(),
           full_name: formData.full_name,
-          phone: formData.phone
-        }
-      });
+          email: formData.email,
+          phone: formData.phone || null,
+          role: formData.role
+        });
 
-      if (error) {
-        // Se não temos permissão de admin, criar apenas o perfil
-        if (error.message.includes('admin')) {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: crypto.randomUUID(),
-              full_name: formData.full_name,
-              email: formData.email,
-              phone: formData.phone || null,
-              role: formData.role
-            });
-
-          if (profileError) throw profileError;
-        } else {
-          throw error;
-        }
+      if (profileError) {
+        throw profileError;
       }
 
       setFormData({ full_name: "", email: "", phone: "", role: "", password: "" });
@@ -88,7 +72,7 @@ const CadastroUsuarios = () => {
         title: "Erro ao cadastrar usuário",
         description: error?.message?.includes('duplicate') 
           ? "Este email já está cadastrado no sistema."
-          : "Não foi possível cadastrar o usuário. Verifique os dados e tente novamente.",
+          : error?.message || "Não foi possível cadastrar o usuário. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
     }
