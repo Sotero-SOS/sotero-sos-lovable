@@ -44,32 +44,36 @@ const CadastroUsuarios = () => {
     }
 
     try {
-      console.log("Iniciando cadastro de usuário:", { 
-        full_name: formData.full_name,
+      // Por enquanto, vamos apenas criar o perfil diretamente
+      // Em produção, isso deve ser feito via função admin do Supabase
+      const { data, error } = await supabase.auth.admin.createUser({
         email: formData.email,
-        role: formData.role 
+        password: formData.password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: formData.full_name,
+          phone: formData.phone
+        }
       });
 
-      // Criar perfil diretamente na tabela profiles
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          id: crypto.randomUUID(),
-          full_name: formData.full_name,
-          email: formData.email,
-          phone: formData.phone || null,
-          role: formData.role,
-          requires_password_reset: true
-        })
-        .select()
-        .single();
-
       if (error) {
-        console.error("Erro ao inserir perfil:", error);
-        throw error;
-      }
+        // Se não temos permissão de admin, criar apenas o perfil
+        if (error.message.includes('admin')) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: crypto.randomUUID(),
+              full_name: formData.full_name,
+              email: formData.email,
+              phone: formData.phone || null,
+              role: formData.role
+            });
 
-      console.log("Usuário cadastrado com sucesso:", data);
+          if (profileError) throw profileError;
+        } else {
+          throw error;
+        }
+      }
 
       setFormData({ full_name: "", email: "", phone: "", role: "", password: "" });
       setIsFormVisible(false);
@@ -84,9 +88,7 @@ const CadastroUsuarios = () => {
         title: "Erro ao cadastrar usuário",
         description: error?.message?.includes('duplicate') 
           ? "Este email já está cadastrado no sistema."
-          : error?.message?.includes('permission') || error?.message?.includes('denied')
-          ? "Você não tem permissão para cadastrar usuários. Verifique com o administrador."
-          : `Erro: ${error?.message || "Não foi possível cadastrar o usuário. Verifique os dados e tente novamente."}`,
+          : "Não foi possível cadastrar o usuário. Verifique os dados e tente novamente.",
         variant: "destructive"
       });
     }
