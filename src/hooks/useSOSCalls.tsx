@@ -7,6 +7,32 @@ type SOSCall = Tables<'sos_calls'>;
 type SOSCallInsert = TablesInsert<'sos_calls'>;
 type SOSCallUpdate = TablesUpdate<'sos_calls'>;
 
+/**
+ * Hook personalizado para gerenciar chamados SOS
+ * 
+ * @description Fornece operações CRUD para chamados SOS usando TanStack Query.
+ * Inclui listagem, criação e atualização de chamados com cache automático.
+ * 
+ * @returns {Object} Objeto contendo:
+ * - sosCalls: Array de chamados SOS
+ * - isLoading: Estado de carregamento
+ * - error: Erro caso ocorra
+ * - createSOSCall: Mutação para criar chamado
+ * - updateSOSCall: Mutação para atualizar chamado
+ * 
+ * @example
+ * ```tsx
+ * const { sosCalls, createSOSCall, updateSOSCall } = useSOSCalls();
+ * 
+ * const handleCreateSOS = (data) => {
+ *   createSOSCall.mutate(data);
+ * };
+ * 
+ * const handleComplete = (id) => {
+ *   updateSOSCall.mutate({ id, updates: { status: 'completed' } });
+ * };
+ * ```
+ */
 export const useSOSCalls = () => {
   const queryClient = useQueryClient();
 

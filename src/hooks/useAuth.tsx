@@ -6,10 +6,34 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type Profile = Tables<'profiles'>;
 
+/**
+ * Interface que estende o User do Supabase com perfil adicional
+ */
 interface AuthUser extends User {
   profile?: Profile;
 }
 
+/**
+ * Hook personalizado para gerenciar autenticação de usuários
+ * 
+ * @description Gerencia o estado de autenticação usando Supabase Auth.
+ * Inclui funcionalidades para login, logout e carregamento do perfil do usuário.
+ * 
+ * @returns {Object} Objeto contendo:
+ * - user: Dados do usuário autenticado (incluindo perfil) ou null
+ * - loading: Boolean indicando se está carregando
+ * - signIn: Função para fazer login
+ * - signOut: Função para fazer logout
+ * 
+ * @example
+ * ```tsx
+ * const { user, loading, signIn, signOut } = useAuth();
+ * 
+ * if (loading) return <LoadingSpinner />;
+ * if (!user) return <LoginForm onSubmit={signIn} />;
+ * return <Dashboard user={user} onLogout={signOut} />;
+ * ```
+ */
 export const useAuth = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,6 +82,10 @@ export const useAuth = () => {
     };
   }, []);
 
+  /**
+   * Busca o perfil do usuário na tabela profiles
+   * @param authUser Objeto User do Supabase Auth
+   */
   const fetchUserProfile = async (authUser: User) => {
     try {
       console.log('useAuth: Buscando perfil do usuário:', authUser.id);
@@ -83,6 +111,12 @@ export const useAuth = () => {
     }
   };
 
+  /**
+   * Realiza login do usuário
+   * @param email Email do usuário
+   * @param password Senha do usuário
+   * @returns Objeto com data e error do Supabase
+   */
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -91,6 +125,10 @@ export const useAuth = () => {
     return { data, error };
   };
 
+  /**
+   * Realiza logout do usuário
+   * @returns Objeto com error (se houver)
+   */
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };

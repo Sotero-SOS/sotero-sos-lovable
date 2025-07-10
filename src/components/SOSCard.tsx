@@ -7,13 +7,43 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type SOSCall = Tables<'sos_calls'>;
 
+/**
+ * Props do componente SOSCard
+ */
 interface SOSCardProps {
+  /** Dados do chamado SOS */
   sos: SOSCall;
+  /** Callback executado quando "Ver Detalhes" é clicado */
   onViewDetails: (id: string) => void;
+  /** Callback executado quando "Finalizar" é clicado */
   onComplete: (id: string) => void;
 }
 
+/**
+ * Componente que exibe um cartão com informações de um chamado SOS
+ * 
+ * @description Apresenta as informações principais de um chamado SOS de forma
+ * visual e organizada, incluindo status, veículo, motorista, localização e
+ * ações disponíveis (ver detalhes e finalizar).
+ * 
+ * @param props - Propriedades do componente
+ * @returns JSX Element do cartão SOS
+ * 
+ * @example
+ * ```tsx
+ * <SOSCard
+ *   sos={sosData}
+ *   onViewDetails={(id) => navigate(`/sos/${id}`)}
+ *   onComplete={(id) => completeSOS(id)}
+ * />
+ * ```
+ */
 export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
+  /**
+   * Retorna as classes CSS para colorir o badge de status
+   * @param status Status do chamado SOS
+   * @returns String com classes CSS do Tailwind
+   */
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case "waiting": return "bg-blue-100 text-blue-800";
@@ -24,6 +54,11 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
     }
   };
 
+  /**
+   * Converte o status do banco para texto legível em português
+   * @param status Status do chamado SOS
+   * @returns Texto do status em português
+   */
   const getStatusText = (status: string | null) => {
     switch (status) {
       case "waiting": return "Em Espera";
@@ -34,6 +69,11 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
     }
   };
 
+  /**
+   * Formata string de tempo para formato brasileiro (HH:MM)
+   * @param timeString String de tempo ISO ou hora
+   * @returns Tempo formatado ou mensagem padrão
+   */
   const formatTime = (timeString: string | null) => {
     if (!timeString) return "Não informado";
     try {
@@ -46,6 +86,11 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
     }
   };
 
+  /**
+   * Formata string de data para formato brasileiro (DD/MM/AAAA)
+   * @param dateString String de data ISO
+   * @returns Data formatada ou mensagem padrão
+   */
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "Não informado";
     try {

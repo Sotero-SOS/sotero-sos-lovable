@@ -7,6 +7,33 @@ type Vehicle = Tables<'vehicles'>;
 type VehicleInsert = TablesInsert<'vehicles'>;
 type VehicleUpdate = TablesUpdate<'vehicles'>;
 
+/**
+ * Hook personalizado para gerenciar veículos
+ * 
+ * @description Fornece operações CRUD completas para veículos usando TanStack Query.
+ * Inclui listagem, criação, atualização e exclusão de veículos com cache automático.
+ * 
+ * @returns {Object} Objeto contendo:
+ * - vehicles: Array de veículos
+ * - isLoading: Estado de carregamento
+ * - error: Erro caso ocorra
+ * - createVehicle: Mutação para criar veículo
+ * - updateVehicle: Mutação para atualizar veículo
+ * - deleteVehicle: Mutação para excluir veículo
+ * 
+ * @example
+ * ```tsx
+ * const { vehicles, createVehicle, deleteVehicle } = useVehicles();
+ * 
+ * const handleCreate = (data) => {
+ *   createVehicle.mutate(data);
+ * };
+ * 
+ * const handleDelete = (id) => {
+ *   deleteVehicle.mutate(id);
+ * };
+ * ```
+ */
 export const useVehicles = () => {
   const queryClient = useQueryClient();
 

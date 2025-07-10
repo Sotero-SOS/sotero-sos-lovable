@@ -7,6 +7,33 @@ type Profile = Tables<'profiles'>;
 type ProfileInsert = TablesInsert<'profiles'>;
 type ProfileUpdate = TablesUpdate<'profiles'>;
 
+/**
+ * Hook personalizado para gerenciar usuários/perfis
+ * 
+ * @description Fornece operações CRUD para perfis de usuários usando TanStack Query.
+ * Inclui listagem, criação, atualização e exclusão de usuários com cache automático.
+ * 
+ * @returns {Object} Objeto contendo:
+ * - users: Array de perfis de usuários
+ * - isLoading: Estado de carregamento
+ * - error: Erro caso ocorra
+ * - createUser: Mutação para criar usuário
+ * - updateUser: Mutação para atualizar usuário
+ * - deleteUser: Mutação para excluir usuário
+ * 
+ * @example
+ * ```tsx
+ * const { users, createUser, updateUser } = useUsers();
+ * 
+ * const handleCreateUser = (userData) => {
+ *   createUser.mutate({ ...userData, password: 'temp123' });
+ * };
+ * 
+ * const handleUpdateUser = (id, updates) => {
+ *   updateUser.mutate({ id, updates });
+ * };
+ * ```
+ */
 export const useUsers = () => {
   const queryClient = useQueryClient();
 

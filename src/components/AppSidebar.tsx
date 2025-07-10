@@ -22,6 +22,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
+/**
+ * Configuração dos itens de menu da sidebar
+ * Cada item possui título, URL, ícone e roles permitidos
+ */
 const menuItems = [
   {
     title: "Dashboard",
@@ -55,6 +59,15 @@ const menuItems = [
   },
 ];
 
+/**
+ * Componente de sidebar da aplicação
+ * 
+ * @description Exibe a navegação lateral da aplicação com menu baseado em permissões.
+ * Mostra logo da empresa, itens de menu filtrados por role do usuário e botão de logout.
+ * Suporta estado colapsado/expandido.
+ * 
+ * @returns JSX Element da sidebar
+ */
 export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
@@ -63,7 +76,11 @@ export function AppSidebar() {
 
   const isCollapsed = state === "collapsed";
 
-  // Mapear roles do banco para display
+  /**
+   * Converte roles do banco de dados para nomes de exibição
+   * @param role Role do usuário no banco (admin, trafego, mecanico)
+   * @returns Nome do role para exibição
+   */
   const getRoleDisplayName = (role: string) => {
     switch (role) {
       case "admin": return "Administrador";
@@ -80,6 +97,10 @@ export function AppSidebar() {
     item.allowedRoles.includes(userRole)
   );
 
+  /**
+   * Manipula o logout do usuário
+   * Chama signOut do hook useAuth e redireciona para home
+   */
   const handleLogout = async () => {
     await signOut();
     navigate("/");
