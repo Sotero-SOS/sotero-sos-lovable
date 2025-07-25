@@ -2,8 +2,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, User, CheckCircle, Eye } from "lucide-react";
+import { Clock, MapPin, User, CheckCircle, Eye, Timer } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
+import { useSOSTimer } from "@/hooks/useSOSTimer";
 
 type SOSCall = Tables<'sos_calls'>;
 
@@ -39,6 +40,11 @@ interface SOSCardProps {
  * ```
  */
 export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
+  const { elapsedTime, isOverdue, formattedTime, estimatedTimeFormatted } = useSOSTimer(
+    sos.request_time,
+    sos.estimated_time,
+    sos.status
+  );
   /**
    * Retorna as classes CSS para colorir o badge de status
    * @param status Status do chamado SOS
@@ -144,6 +150,20 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-blue-500" />
               <span>Tempo estimado: {sos.estimated_time} min</span>
+            </div>
+          )}
+
+          {/* Cronômetro em tempo real */}
+          {sos.status !== "completed" && sos.request_time && (
+            <div className={`flex items-center gap-2 text-sm font-semibold ${
+              isOverdue ? 'text-red-600 animate-pulse' : 'text-blue-600'
+            }`}>
+              <Timer className={`h-4 w-4 ${isOverdue ? 'text-red-600' : 'text-blue-600'}`} />
+              <span>
+                Tempo decorrido: {formattedTime}
+                {estimatedTimeFormatted && ` / ${estimatedTimeFormatted}`}
+                {isOverdue && ' - ATRASADO!'}
+              </span>
             </div>
           )}
 
