@@ -107,18 +107,18 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={isCollapsed ? "w-14" : "w-64"} collapsible="icon">
-      <SidebarContent>
-        <div className="p-4">
+    <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} bg-gradient-to-b from-sotero-blue/10 to-sotero-purple/10 border-r-sotero-blue/20`} collapsible="icon">
+      <SidebarContent className="bg-transparent">
+        <div className="p-4 bg-gradient-to-r from-sotero-blue to-sotero-purple shadow-lg">
           <img 
             src="/lovable-uploads/b7e8b7f6-44a9-4caf-82c7-87c7325cddb2.png" 
             alt="Sotero Ambiental" 
-            className={`transition-all duration-200 ${isCollapsed ? "h-10" : "h-16"} mx-auto`}
+            className={`transition-all duration-200 ${isCollapsed ? "h-8" : "h-12"} mx-auto filter brightness-0 invert`}
           />
         </div>
         
-        <SidebarGroup>
-          <SidebarGroupLabel className={isCollapsed ? "hidden" : ""}>
+        <SidebarGroup className="mt-2">
+          <SidebarGroupLabel className={`${isCollapsed ? "hidden" : ""} text-sotero-blue font-semibold`}>
             Menu Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -127,7 +127,10 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild
-                    className={location.pathname === item.url ? "bg-sotero-blue text-white" : ""}
+                    className={`${location.pathname === item.url 
+                      ? "bg-gradient-to-r from-sotero-blue to-sotero-purple text-white shadow-md" 
+                      : "hover:bg-sotero-blue/10 hover:text-sotero-blue"
+                    } transition-all duration-200`}
                   >
                     <NavLink to={item.url} className="flex items-center gap-2">
                       <item.icon className="h-4 w-4" />
@@ -141,11 +144,11 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       
-      <SidebarFooter>
+      <SidebarFooter className="bg-gradient-to-r from-sotero-orange/10 to-sotero-orange/5 border-t border-sotero-orange/20">
         <Button 
           variant="ghost" 
           onClick={handleLogout}
-          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="w-full justify-start text-sotero-orange hover:text-white hover:bg-sotero-orange font-medium transition-all duration-200"
         >
           {!isCollapsed && "Sair"}
         </Button>

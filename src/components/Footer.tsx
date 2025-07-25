@@ -1,7 +1,7 @@
 
 export function Footer() {
   return (
-    <footer className="bg-gray-100 border-t mt-auto">
+    <footer className="bg-gradient-to-r from-sotero-green to-sotero-green-light border-t mt-auto shadow-lg">
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-6">
@@ -18,13 +18,13 @@ export function Footer() {
           </div>
           
           <div className="text-center md:text-right">
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-white/90 mb-1 drop-shadow-sm">
               Projeto acadêmico desenvolvido por estudantes da UniJorge
             </p>
-            <p className="text-sm text-gray-600 mb-1">
+            <p className="text-sm text-white/90 mb-1 drop-shadow-sm">
               em parceria com a Sotero Ambiental
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-white/80 drop-shadow-sm">
               Contato: contato@soteroambiental.com.br
             </p>
           </div>

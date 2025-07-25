@@ -22,19 +22,19 @@ export function AppHeader() {
   }, []);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-white px-4 shadow-sm">
+    <header className="flex h-16 items-center justify-between border-b bg-gradient-header shadow-lg px-4">
       <div className="flex items-center gap-4">
-        <SidebarTrigger />
+        <SidebarTrigger className="text-white hover:bg-white/20" />
         <div className="hidden sm:block">
-          <h2 className="text-lg font-semibold text-gray-900">Sistema SOS - Sotero Ambiental</h2>
+          <h2 className="text-lg font-semibold text-white drop-shadow-sm">Sistema SOS - Sotero Ambiental</h2>
         </div>
       </div>
       
       {user && (
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <Badge variant="secondary" className="text-xs">
+            <p className="text-sm font-medium text-white drop-shadow-sm">{user.name}</p>
+            <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
               {user.role}
             </Badge>
           </div>

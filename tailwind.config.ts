@@ -66,7 +66,10 @@ export default {
 				sotero: {
 					blue: 'hsl(var(--sotero-blue))',
 					green: 'hsl(var(--sotero-green))',
+					orange: 'hsl(var(--sotero-orange))',
+					purple: 'hsl(var(--sotero-purple))',
 					'blue-light': 'hsl(var(--sotero-blue-light))',
+					'blue-dark': 'hsl(var(--sotero-blue-dark))',
 					'green-light': 'hsl(var(--sotero-green-light))'
 				},
 				status: {
@@ -75,6 +78,11 @@ export default {
 					success: 'hsl(var(--status-success))',
 					info: 'hsl(var(--status-info))'
 				}
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-success': 'var(--gradient-success)',
+				'gradient-header': 'var(--gradient-header)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
