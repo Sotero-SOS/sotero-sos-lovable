@@ -1,0 +1,68 @@
+
+Missing columns from the new database schema:
+
+**user table:**
+- `avatar_url`: Stores the URL of the user's avatar.
+- `full_name`: Stores the full name of the user.
+- `phone`: Stores the user's phone number.
+- `requires_password_reset`: A boolean flag to indicate if the user needs to reset their password.
+- `role`: The user's role (e.g., admin, trafego, mecanico).
+
+To add these columns to the `user` table, run the following SQL commands:
+
+```sql
+ALTER TABLE "user" ADD COLUMN avatar_url TEXT;
+ALTER TABLE "user" ADD COLUMN full_name TEXT;
+ALTER TABLE "user" ADD COLUMN phone TEXT;
+ALTER TABLE "user" ADD COLUMN requires_password_reset BOOLEAN;
+ALTER TABLE "user" ADD COLUMN role TEXT;
+```
+
+**veiculo table:**
+- `driver_name`: The name of the driver associated with the vehicle.
+- `last_activity`: The timestamp of the last activity.
+- `location`: The current location of the vehicle.
+- `maintenance_type`: The type of maintenance being performed.
+- `status`: The current status of the vehicle (e.g., circulating, inactive, maintenance).
+- `type`: The type of vehicle (e.g., Truck, Super Toco).
+
+To add these columns to the `veiculo` table, run the following SQL commands:
+
+```sql
+ALTER TABLE veiculo ADD COLUMN driver_name TEXT;
+ALTER TABLE veiculo ADD COLUMN last_activity TIMESTAMP;
+ALTER TABLE veiculo ADD COLUMN location TEXT;
+ALTER TABLE veiculo ADD COLUMN maintenance_type TEXT;
+ALTER TABLE veiculo ADD COLUMN type TEXT;
+```
+
+**atendimento table:**
+- `diagnostico_compactador`: A list of diagnostic issues related to the compactor.
+- `diagnostico_eletrica`: A list of diagnostic issues related to the electrical system.
+- `diagnostico_mecanico`: A list of diagnostic issues related to the mechanical system.
+- `diagnostico_suspensao`: A list of diagnostic issues related to the suspension system.
+- `outros_problemas`: A text field for other problems.
+- `pneu_furado`: A boolean flag to indicate a flat tire.
+- `pneu_posicoes`: A list of tire positions.
+- `problem_type`: The type of problem.
+- `user_id`: The ID of the user who created the service request.
+- `vehicle_id`: The ID of the vehicle.
+- `vehicle_plate`: The license plate of the vehicle.
+- `vehicle_type`: The type of vehicle.
+
+To add these columns to the `atendimento` table, run the following SQL commands:
+
+```sql
+ALTER TABLE atendimento ADD COLUMN diagnostico_compactador TEXT[];
+ALTER TABLE atendimento ADD COLUMN diagnostico_eletrica TEXT[];
+ALTER TABLE atendimento ADD COLUMN diagnostico_mecanico TEXT[];
+ALTER TABLE atendimento ADD COLUMN diagnostico_suspensao TEXT[];
+ALTER TABLE atendimento ADD COLUMN outros_problemas TEXT;
+ALTER TABLE atendimento ADD COLUMN pneu_furado BOOLEAN;
+ALTER TABLE atendimento ADD COLUMN pneu_posicoes TEXT[];
+ALTER TABLE atendimento ADD COLUMN problem_type TEXT;
+ALTER TABLE atendimento ADD COLUMN user_id UUID REFERENCES auth.users(id);
+ALTER TABLE atendimento ADD COLUMN vehicle_id INTEGER REFERENCES veiculo(cod_veiculo);
+ALTER TABLE atendimento ADD COLUMN vehicle_plate TEXT;
+ALTER TABLE atendimento ADD COLUMN vehicle_type TEXT;
+```

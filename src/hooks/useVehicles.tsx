@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
-type Vehicle = Tables<'vehicles'>;
-type VehicleInsert = TablesInsert<'vehicles'>;
-type VehicleUpdate = TablesUpdate<'vehicles'>;
+type Vehicle = Tables<'veiculo'>;
+type VehicleInsert = TablesInsert<'veiculo'>;
+type VehicleUpdate = TablesUpdate<'veiculo'>;
 
 /**
  * Hook personalizado para gerenciar veículos
@@ -38,12 +38,12 @@ export const useVehicles = () => {
   const queryClient = useQueryClient();
 
   const { data: vehicles = [], isLoading, error } = useQuery({
-    queryKey: ['vehicles'],
+    queryKey: ['veiculo'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vehicles')
+        .from('veiculo')
         .select('*')
-        .order('plate', { ascending: true });
+        .order('cod_veiculo', { ascending: true });
 
       if (error) throw error;
       return data;
@@ -53,7 +53,7 @@ export const useVehicles = () => {
   const createVehicle = useMutation({
     mutationFn: async (vehicleData: VehicleInsert) => {
       const { data, error } = await supabase
-        .from('vehicles')
+        .from('veiculo')
         .insert([vehicleData])
         .select()
         .single();
@@ -62,16 +62,16 @@ export const useVehicles = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['veiculo'] });
     },
   });
 
   const updateVehicle = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: VehicleUpdate }) => {
+    mutationFn: async ({ id, updates }: { id: number; updates: VehicleUpdate }) => {
       const { data, error } = await supabase
-        .from('vehicles')
+        .from('veiculo')
         .update(updates)
-        .eq('id', id)
+        .eq('cod_veiculo', id)
         .select()
         .single();
 
@@ -79,21 +79,21 @@ export const useVehicles = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['veiculo'] });
     },
   });
 
   const deleteVehicle = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('vehicles')
+        .from('veiculo')
         .delete()
-        .eq('id', id);
+        .eq('cod_veiculo', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['veiculo'] });
     },
   });
 

@@ -23,7 +23,7 @@ const Perfil = () => {
   });
   const [formData, setFormData] = useState({
     full_name: user?.profile?.full_name || "",
-    email: user?.profile?.email || user?.email || "", 
+    email: user?.profile?.username || user?.email || "", 
     phone: user?.profile?.phone || ""
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +34,7 @@ const Perfil = () => {
     
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('user')
         .update({
           full_name: formData.full_name,
           phone: formData.phone || null
@@ -61,7 +61,7 @@ const Perfil = () => {
   const handleCancel = () => {
     setFormData({
       full_name: user?.profile?.full_name || "",
-      email: user?.profile?.email || user?.email || "",
+      email: user?.profile?.username || user?.email || "",
       phone: user?.profile?.phone || ""
     });
     setIsEditing(false);
@@ -81,7 +81,7 @@ const Perfil = () => {
         const result = e.target?.result as string;
         
         const { error } = await supabase
-          .from('profiles')
+          .from('user')
           .update({ avatar_url: result })
           .eq('id', user.id);
 
@@ -152,7 +152,7 @@ const Perfil = () => {
     return <div>Carregando perfil...</div>;
   }
 
-  const getRoleDisplayName = (role: string) => {
+  const getRoleDisplayName = (role: string | null) => {
     switch (role) {
       case "admin": return "Administrador";
       case "trafego": return "Tráfego";
@@ -173,9 +173,9 @@ const Perfil = () => {
           <div className="flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-20 w-20 cursor-pointer hover:opacity-80 transition-opacity" onClick={handlePhotoClick}>
-                <AvatarImage src={user.profile.avatar_url || ''} alt={user.profile.full_name} />
+                <AvatarImage src={user.profile.avatar_url || ''} alt={user.profile.full_name || ''} />
                 <AvatarFallback className="text-lg">
-                  {user.profile.full_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  {user.profile.full_name?.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
               <div className="absolute -bottom-1 -right-1 bg-sotero-blue text-white rounded-full p-1 cursor-pointer hover:bg-sotero-blue-light transition-colors" onClick={handlePhotoClick}>
@@ -194,7 +194,7 @@ const Perfil = () => {
                 {user.profile.full_name}
                 <Badge variant="secondary">{getRoleDisplayName(user.profile.role)}</Badge>
               </CardTitle>
-              <CardDescription>{user.profile.email}</CardDescription>
+              <CardDescription>{user.profile.username}</CardDescription>
             </div>
           </div>
         </CardHeader>

@@ -15,9 +15,9 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ErrorMessage } from "@/components/ErrorMessage";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Vehicle = Tables<'vehicles'>;
+type Vehicle = Tables<'veiculo'>;
 
-const vehicleIcons = {
+const vehicleIcons: { [key: string]: string } = {
   "Truck": "🚛",
   "Super Toco": "🚛",
   "Agilix": "🚛",
@@ -31,7 +31,7 @@ const Veiculos = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [vehicleForm, setVehicleForm] = useState({
-    type: "" as "Truck" | "Super Toco" | "Agilix" | "Triciclo" | "",
+    type: "",
     plate: "",
     driver_name: "",
     status: "circulating",
@@ -41,9 +41,9 @@ const Veiculos = () => {
 
   // Filtrar veículos por status
   const vehiclesByStatus = {
-    circulating: vehicles.filter(v => v.status === "circulating"),
-    inactive: vehicles.filter(v => v.status === "inactive"),
-    maintenance: vehicles.filter(v => v.status === "maintenance")
+    circulating: vehicles.filter(v => v.situacao === "circulating"),
+    inactive: vehicles.filter(v => v.situacao === "inactive"),
+    maintenance: vehicles.filter(v => v.situacao === "maintenance")
   };
 
   const handleAddVehicle = async () => {
@@ -58,10 +58,10 @@ const Veiculos = () => {
 
     try {
       await createVehicle.mutateAsync({
-        type: vehicleForm.type,
-        plate: vehicleForm.plate,
+        categoria: vehicleForm.type,
+        cod_veiculo: parseInt(vehicleForm.plate, 10),
         driver_name: vehicleForm.driver_name,
-        status: vehicleForm.status,
+        situacao: vehicleForm.status,
         maintenance_type: vehicleForm.status === "maintenance" ? vehicleForm.maintenance_type : null,
         location: "Base Operacional"
       });
@@ -85,10 +85,10 @@ const Veiculos = () => {
   const handleEditVehicle = (vehicle: Vehicle) => {
     setEditingVehicle(vehicle);
     setVehicleForm({
-      type: vehicle.type,
-      plate: vehicle.plate,
-      driver_name: vehicle.driver_name,
-      status: vehicle.status || "circulating",
+      type: vehicle.type || "",
+      plate: vehicle.cod_veiculo.toString(),
+      driver_name: vehicle.driver_name || "",
+      status: vehicle.situacao || "circulating",
       maintenance_type: vehicle.maintenance_type || ""
     });
     setShowEditDialog(true);
@@ -106,12 +106,12 @@ const Veiculos = () => {
 
     try {
       await updateVehicle.mutateAsync({
-        id: editingVehicle.id,
+        id: editingVehicle.cod_veiculo,
         updates: {
           type: vehicleForm.type,
-          plate: vehicleForm.plate,
+          cod_veiculo: parseInt(vehicleForm.plate, 10),
           driver_name: vehicleForm.driver_name,
-          status: vehicleForm.status,
+          situacao: vehicleForm.status,
           maintenance_type: vehicleForm.status === "maintenance" ? vehicleForm.maintenance_type : null
         }
       });
@@ -132,7 +132,7 @@ const Veiculos = () => {
     }
   };
 
-  const handleDeleteVehicle = async (vehicleId: string, vehiclePlate: string) => {
+  const handleDeleteVehicle = async (vehicleId: number, vehiclePlate: string) => {
     if (!confirm(`Tem certeza que deseja remover o veículo ${vehiclePlate}?`)) return;
 
     try {
@@ -156,15 +156,15 @@ const Veiculos = () => {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <span className="text-2xl">
-              {vehicleIcons[vehicle.type]}
+              {vehicleIcons[vehicle.type || ""]}
             </span>
             <div>
-              <h3 className="font-semibold text-lg">{vehicle.plate}</h3>
+              <h3 className="font-semibold text-lg">{vehicle.cod_veiculo}</h3>
               <p className="text-sm text-gray-600">{vehicle.type}</p>
             </div>
           </div>
-          <Badge variant={vehicle.status === "circulating" ? "default" : vehicle.status === "maintenance" ? "destructive" : "secondary"}>
-            {vehicle.status === "circulating" ? "Ativo" : vehicle.status === "maintenance" ? "Manutenção" : "Inativo"}
+          <Badge variant={vehicle.situacao === "circulating" ? "default" : vehicle.situacao === "maintenance" ? "destructive" : "secondary"}>
+            {vehicle.situacao === "circulating" ? "Ativo" : vehicle.situacao === "maintenance" ? "Manutenção" : "Inativo"}
           </Badge>
         </div>
         
@@ -208,7 +208,7 @@ const Veiculos = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => handleDeleteVehicle(vehicle.id, vehicle.plate)}
+            onClick={() => handleDeleteVehicle(vehicle.cod_veiculo, vehicle.cod_veiculo.toString())}
             className="text-red-600 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
           >
             <Trash2 className="h-3 w-3" />
@@ -274,7 +274,7 @@ const Veiculos = () => {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {vehiclesByStatus.circulating.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                <VehicleCard key={vehicle.cod_veiculo} vehicle={vehicle} />
               ))}
             </div>
           )}
@@ -288,7 +288,7 @@ const Veiculos = () => {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {vehiclesByStatus.inactive.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                <VehicleCard key={vehicle.cod_veiculo} vehicle={vehicle} />
               ))}
             </div>
           )}
@@ -302,7 +302,7 @@ const Veiculos = () => {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {vehiclesByStatus.maintenance.map((vehicle) => (
-                <VehicleCard key={vehicle.id} vehicle={vehicle} showMaintenance />
+                <VehicleCard key={vehicle.cod_veiculo} vehicle={vehicle} showMaintenance />
               ))}
             </div>
           )}

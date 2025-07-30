@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
-type Profile = Tables<'profiles'>;
-type ProfileInsert = TablesInsert<'profiles'>;
-type ProfileUpdate = TablesUpdate<'profiles'>;
+type Profile = Tables<'user'>;
+type ProfileInsert = TablesInsert<'user'>;
+type ProfileUpdate = TablesUpdate<'user'>;
 
 /**
  * Hook personalizado para gerenciar usuários/perfis
@@ -38,10 +38,10 @@ export const useUsers = () => {
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading, error } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['user'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user')
         .select('*')
         .order('full_name', { ascending: true });
 
@@ -57,7 +57,7 @@ export const useUsers = () => {
       const { password, ...profileData } = userData;
       
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user')
         .insert([profileData])
         .select()
         .single();
@@ -66,14 +66,14 @@ export const useUsers = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
     },
   });
 
   const updateUser = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: ProfileUpdate }) => {
+    mutationFn: async ({ id, updates }: { id: number; updates: ProfileUpdate }) => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user')
         .update(updates)
         .eq('id', id)
         .select()
@@ -83,21 +83,21 @@ export const useUsers = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
     },
   });
 
   const deleteUser = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id: number) => {
       const { error } = await supabase
-        .from('profiles')
+        .from('user')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
     },
   });
 

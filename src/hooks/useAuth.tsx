@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import type { Tables } from '@/integrations/supabase/types';
 
-type Profile = Tables<'profiles'>;
+type Profile = Tables<'user'>;
 
 /**
  * Interface que estende o User do Supabase com perfil adicional
@@ -83,14 +83,14 @@ export const useAuth = () => {
   }, []);
 
   /**
-   * Busca o perfil do usuário na tabela profiles
+   * Busca o perfil do usuário na tabela user
    * @param authUser Objeto User do Supabase Auth
    */
   const fetchUserProfile = async (authUser: User) => {
     try {
       console.log('useAuth: Buscando perfil do usuário:', authUser.id);
       const { data: profile, error } = await supabase
-        .from('profiles')
+        .from('user')
         .select('*')
         .eq('id', authUser.id)
         .maybeSingle();

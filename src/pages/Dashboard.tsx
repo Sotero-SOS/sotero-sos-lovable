@@ -17,7 +17,7 @@ const Dashboard = () => {
   const filteredData = sosCalls.filter(sos => {
     const matchesFilter = filter === "all" || sos.status === filter;
     const matchesSearch = (sos.vehicle_plate?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         sos.driver_name?.toLowerCase().includes(searchTerm.toLowerCase())) ?? false;
+                         sos.matricula_motorista?.toString().toLowerCase().includes(searchTerm.toLowerCase())) ?? false;
     return matchesFilter && matchesSearch;
   });
 
@@ -29,20 +29,20 @@ const Dashboard = () => {
     overdue: sosCalls.filter(s => s.status === "overdue").length,
   };
 
-  const handleViewDetails = (id: string) => {
+  const handleViewDetails = (id: number) => {
     toast({
       title: "Visualizar detalhes",
       description: `Abrindo detalhes do chamado ${id}`,
     });
   };
 
-  const handleComplete = async (id: string) => {
+  const handleComplete = async (id: number) => {
     try {
       await updateSOSCall.mutateAsync({
         id,
         updates: {
           status: "completed",
-          completion_time: new Date().toLocaleTimeString('pt-BR', { 
+          final_sos: new Date().toLocaleTimeString('pt-BR', { 
             hour: '2-digit', 
             minute: '2-digit' 
           })
@@ -148,7 +148,7 @@ const Dashboard = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredData.map((sos) => (
             <SOSCard
-              key={sos.id}
+              key={sos.nr_atendimento}
               sos={sos}
               onViewDetails={handleViewDetails}
               onComplete={handleComplete}

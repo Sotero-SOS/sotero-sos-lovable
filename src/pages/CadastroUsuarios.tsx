@@ -15,7 +15,7 @@ import { ErrorMessage } from "@/components/ErrorMessage";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-type Profile = Tables<'profiles'>;
+type Profile = Tables<'user'>;
 
 const CadastroUsuarios = () => {
   const { users, isLoading, error, createUser, updateUser, deleteUser } = useUsers();
@@ -60,13 +60,14 @@ const CadastroUsuarios = () => {
         // Se não temos permissão de admin, criar apenas o perfil
         if (error.message.includes('admin')) {
           const { error: profileError } = await supabase
-            .from('profiles')
+            .from('user')
             .insert({
               id: crypto.randomUUID(),
               full_name: formData.full_name,
-              email: formData.email,
+              username: formData.email,
               phone: formData.phone || null,
-              role: formData.role
+              role: formData.role,
+              hashed_password: '' // TODO: hash password
             });
 
           if (profileError) throw profileError;
@@ -97,10 +98,10 @@ const CadastroUsuarios = () => {
   const handleEdit = (user: Profile) => {
     setEditingUser(user);
     setFormData({
-      full_name: user.full_name,
-      email: user.email,
+      full_name: user.full_name || "",
+      email: user.username,
       phone: user.phone || "",
-      role: user.role,
+      role: user.role as any,
       password: ""
     });
     setIsEditDialogOpen(true);
@@ -123,7 +124,7 @@ const CadastroUsuarios = () => {
         id: editingUser.id,
         updates: {
           full_name: formData.full_name,
-          email: formData.email,
+          username: formData.email,
           phone: formData.phone || null,
           role: formData.role
         }
@@ -146,7 +147,7 @@ const CadastroUsuarios = () => {
     }
   };
 
-  const handleDelete = async (userId: string, userName: string) => {
+  const handleDelete = async (userId: number, userName: string) => {
     if (!confirm(`Tem certeza que deseja remover ${userName}?`)) return;
 
     try {
@@ -164,7 +165,7 @@ const CadastroUsuarios = () => {
     }
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: string | null) => {
     switch (role) {
       case "admin": return "default";
       case "trafego": return "secondary";
@@ -173,7 +174,7 @@ const CadastroUsuarios = () => {
     }
   };
 
-  const getRoleDisplayName = (role: string) => {
+  const getRoleDisplayName = (role: string | null) => {
     switch (role) {
       case "admin": return "Administrador";
       case "trafego": return "Tráfego";
@@ -346,11 +347,8 @@ const CadastroUsuarios = () => {
                       </Badge>
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
-                      <p>📧 {user.email}</p>
+                      <p>📧 {user.username}</p>
                       {user.phone && <p>📱 {user.phone}</p>}
-                      {user.created_at && (
-                        <p>📅 Cadastrado em: {new Date(user.created_at).toLocaleDateString('pt-BR')}</p>
-                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -364,7 +362,7 @@ const CadastroUsuarios = () => {
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      onClick={() => handleDelete(user.id, user.full_name)}
+                      onClick={() => handleDelete(user.id, user.full_name || '')}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />

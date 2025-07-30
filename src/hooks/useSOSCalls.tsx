@@ -3,9 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
-type SOSCall = Tables<'sos_calls'>;
-type SOSCallInsert = TablesInsert<'sos_calls'>;
-type SOSCallUpdate = TablesUpdate<'sos_calls'>;
+type SOSCall = Tables<'atendimento'>;
+type SOSCallInsert = TablesInsert<'atendimento'>;
+type SOSCallUpdate = TablesUpdate<'atendimento'>;
 
 /**
  * Hook personalizado para gerenciar chamados SOS
@@ -37,12 +37,12 @@ export const useSOSCalls = () => {
   const queryClient = useQueryClient();
 
   const { data: sosCalls = [], isLoading, error } = useQuery({
-    queryKey: ['sos_calls'],
+    queryKey: ['atendimento'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('sos_calls')
+        .from('atendimento')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('data', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -52,7 +52,7 @@ export const useSOSCalls = () => {
   const createSOSCall = useMutation({
     mutationFn: async (sosCall: SOSCallInsert) => {
       const { data, error } = await supabase
-        .from('sos_calls')
+        .from('atendimento')
         .insert([sosCall])
         .select()
         .single();
@@ -61,16 +61,16 @@ export const useSOSCalls = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sos_calls'] });
+      queryClient.invalidateQueries({ queryKey: ['atendimento'] });
     },
   });
 
   const updateSOSCall = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: SOSCallUpdate }) => {
+    mutationFn: async ({ id, updates }: { id: number; updates: SOSCallUpdate }) => {
       const { data, error } = await supabase
-        .from('sos_calls')
+        .from('atendimento')
         .update(updates)
-        .eq('id', id)
+        .eq('nr_atendimento', id)
         .select()
         .single();
 
@@ -78,7 +78,7 @@ export const useSOSCalls = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sos_calls'] });
+      queryClient.invalidateQueries({ queryKey: ['atendimento'] });
     },
   });
 

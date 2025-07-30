@@ -6,7 +6,7 @@ import { Clock, MapPin, User, CheckCircle, Eye, Timer } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 import { useSOSTimer } from "@/hooks/useSOSTimer";
 
-type SOSCall = Tables<'sos_calls'>;
+type SOSCall = Tables<"atendimento">;
 
 /**
  * Props do componente SOSCard
@@ -15,9 +15,9 @@ interface SOSCardProps {
   /** Dados do chamado SOS */
   sos: SOSCall;
   /** Callback executado quando "Ver Detalhes" é clicado */
-  onViewDetails: (id: string) => void;
+  onViewDetails: (id: number) => void;
   /** Callback executado quando "Finalizar" é clicado */
-  onComplete: (id: string) => void;
+  onComplete: (id: number) => void;
 }
 
 /**
@@ -41,8 +41,8 @@ interface SOSCardProps {
  */
 export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
   const { elapsedTime, isOverdue, formattedTime, estimatedTimeFormatted } = useSOSTimer(
-    sos.request_time,
-    sos.estimated_time,
+    sos.inicio_sos,
+    30, // TODO: replace with actual estimated time
     sos.status
   );
   /**
@@ -129,32 +129,32 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
         <div className="space-y-3 mb-4">
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-gray-500" />
-            <span>{sos.driver_name || "Motorista não informado"}</span>
+            <span>{sos.matricula_motorista || "Motorista não informado"}</span>
           </div>
           
-          {sos.location && (
+          {sos.local && (
             <div className="flex items-center gap-2 text-sm">
               <MapPin className="h-4 w-4 text-gray-500" />
-              <span>{sos.location}</span>
+              <span>{sos.local}</span>
             </div>
           )}
           
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-4 w-4 text-gray-500" />
             <span>
-              Solicitado: {formatDate(sos.created_at)} às {formatTime(sos.request_time)}
+              Solicitado: {formatDate(sos.data)} às {formatTime(sos.inicio_sos)}
             </span>
           </div>
 
-          {sos.estimated_time && (
+          {sos.final_sos && (
             <div className="flex items-center gap-2 text-sm">
               <Clock className="h-4 w-4 text-blue-500" />
-              <span>Tempo estimado: {sos.estimated_time} min</span>
+              <span>Tempo estimado: {sos.final_sos} min</span>
             </div>
           )}
 
           {/* Cronômetro em tempo real */}
-          {sos.status !== "completed" && sos.request_time && (
+          {sos.status !== "completed" && sos.inicio_sos && (
             <div className={`flex items-center gap-2 text-sm font-semibold ${
               isOverdue ? 'text-red-600 animate-pulse' : 'text-blue-600'
             }`}>
@@ -167,10 +167,10 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
             </div>
           )}
 
-          {sos.completion_time && sos.status === "completed" && (
+          {sos.final_sos && sos.status === "completed" && (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CheckCircle className="h-4 w-4" />
-              <span>Finalizado às {sos.completion_time}</span>
+              <span>Finalizado às {sos.final_sos}</span>
             </div>
           )}
         </div>
@@ -182,10 +182,10 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
           </div>
         )}
 
-        {sos.description && (
+        {sos.outros_problemas && (
           <div className="mb-4">
             <p className="text-xs font-medium text-gray-500 mb-1">DESCRIÇÃO</p>
-            <p className="text-sm text-gray-700 line-clamp-2">{sos.description}</p>
+            <p className="text-sm text-gray-700 line-clamp-2">{sos.outros_problemas}</p>
           </div>
         )}
 
@@ -193,7 +193,7 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onViewDetails(sos.id)}
+            onClick={() => onViewDetails(sos.nr_atendimento)}
             className="flex-1 flex items-center gap-2"
           >
             <Eye className="h-4 w-4" />
@@ -203,7 +203,7 @@ export const SOSCard = ({ sos, onViewDetails, onComplete }: SOSCardProps) => {
           {sos.status !== "completed" && (
             <Button
               size="sm"
-              onClick={() => onComplete(sos.id)}
+              onClick={() => onComplete(sos.nr_atendimento)}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
             >
               <CheckCircle className="h-4 w-4" />
